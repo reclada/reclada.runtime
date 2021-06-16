@@ -10,6 +10,7 @@ class Job:
         self.runner_id = runner_id
 
         self.__db_client = db_client  # TODO: remove from Job instance definition?
+        self.status = self._status
 
     def __repr__(self):
         return f'Job id={self.id} with status={self.status} is appointed to runner id={self.runner_id}'
