@@ -25,7 +25,7 @@ class Job:
     @status.setter
     def status(self, new_status):
         """
-        Sets job status, also updates status in DB
+        Sets job status
 
         """
         if new_status not in JobStatus:
@@ -47,12 +47,17 @@ class JobDB:
         self.db_client = db_client
 
     def get_job(self, _id):
+        """
+        Gets job from DB and returns Job instance
+
+        """
         data = {
             'class': 'Job',
             'id': _id,
             'attrs': {},
         }
         job = self.db_client.send_request('list', json.dumps(data))
+
         return Job(
             _id=job['id'],
             _type=job['type'],
@@ -63,6 +68,11 @@ class JobDB:
         )
 
     def get_runner_jobs(self, runner_id):
+        """
+        Gets new jobs from DB that are assigned to runner and returns list of Job instances
+
+        """
+
         data = {
             'class': 'Job',
             'attrs': {
@@ -71,6 +81,7 @@ class JobDB:
             },
         }
         jobs = self.db_client.send_request('list', json.dumps(data))
+
         return [Job(
             _id=job['id'],
             _type=job['type'],
@@ -81,6 +92,10 @@ class JobDB:
         ) for job in jobs]
 
     def save_job(self, job):
+        """
+        Updates job in DB (only updates status now, but needed to specify all required attrs)
+
+        """
         data = {
             'class': 'Job',
             'id': job.id,

@@ -33,7 +33,7 @@ class Runner:
     @status.setter
     def status(self, new_status):
         """
-        Sets runner status, also updates status in DB
+        Sets runner status
 
         """
         if new_status not in RunnerStatus:
@@ -46,7 +46,6 @@ class Runner:
         """
         Gets list of jobs
 
-        :return:
         """
         return self.__jobs
 
@@ -54,10 +53,10 @@ class Runner:
         """
         Gets new jobs from DB
 
-        :return: None
         """
         self.__jobs = self.__job_db.get_runner_jobs(self.id)
 
+        # Updates statuses of all jobs in DB to "pending"
         for job in self.__jobs:
             job.status = JobStatus.PENDING
             self.__job_db.save_job(job)
@@ -66,18 +65,18 @@ class Runner:
         """
         Runs job
 
-        :return:
         """
+        # Updates job status in DB to "running"
         job.status = JobStatus.RUNNING
         self.__job_db.save_job(job)
 
         job_result = subprocess.run(job.command.split())
 
+        # Updates job status in DB depending on the job return code
         if job_result.returncode == 0:
             job.status = JobStatus.SUCCESS
         else:
             job.status = JobStatus.FAILED
-
         self.__job_db.save_job(job)
 
         return job_result
@@ -91,6 +90,7 @@ class Runner:
             self.get_new_jobs()
 
             if self.jobs:
+                # Updates runner status in DB to "busy" before running jobs
                 self.status = RunnerStatus.BUSY
                 self.__runner_db.save_runner(self)
 
@@ -100,6 +100,7 @@ class Runner:
                     job_stderr = job_result.stderr
                     job_returncode = job_result.returncode
 
+                # Updates runner status in DB to "up" when all jobs finished
                 self.status = RunnerStatus.UP
                 self.__runner_db.save_runner(self)
             else:
@@ -117,12 +118,17 @@ class RunnerDB:
         self.db_client = db_client
 
     def get_runner(self, _id, runner_db, job_db):
+        """
+        Gets runner from DB and returns Runner instance
+
+        """
         data = {
             'class': 'Runner',
             'id': _id,
             'attrs': {},
         }
         runner = self.db_client.send_request('list', json.dumps(data))
+
         return Runner(
             _id=runner['id'],
             status=runner['status'],
@@ -131,6 +137,10 @@ class RunnerDB:
         )
 
     def save_runner(self, runner):
+        """
+        Updates runner in DB (only updates status now)
+
+        """
         data = {
             'class': 'Job',
             'id': runner.id,
