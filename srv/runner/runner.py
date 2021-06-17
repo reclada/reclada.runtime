@@ -5,22 +5,19 @@ import time
 from enum import Enum
 
 from srv.dbclient.dbclient_factory import dbclient
-from srv.job.job import Job, JobStatus
+from srv.job.job import JobStatus, JobDB
 
 
 class Runner:
     """
     Gets jobs from DB and runs them
     """
-    def __init__(self, _id, db_client):
+    def __init__(self, _id, status, runner_db, job_db):
         self.id = _id
-        self._status = RunnerStatus.UP
+        self._status = status
+        self.__runner_db = runner_db
+        self.__job_db = job_db
         self.__jobs = []
-
-        self.__db_client = dbclient.get_client(db_client)
-        self.__db_client.set_credentials()
-        self.__db_client.connect()
-        self.status = self._status
 
     def __repr__(self):
         return f'Runner id={self.id} with status={self.status} having {len(self.jobs)} jobs'
@@ -44,15 +41,6 @@ class Runner:
 
         self._status = new_status
 
-        data = {
-            'class': 'Runner',
-            'id': self.id,
-            'attrs': {
-                'status': self._status.value,
-            },
-        }
-        self.__db_client.send_request('update', json.dumps(data))
-
     @property
     def jobs(self):
         """
@@ -68,41 +56,29 @@ class Runner:
 
         :return: None
         """
-        data = {
-            'class': 'Job',
-            'attrs': {
-                'status': JobStatus.NEW.value,
-                'runner_id': self.id,
-            },
-        }
-        new_jobs = self.__db_client.send_request('list', json.dumps(data))
+        self.__jobs = self.__job_db.get_runner_jobs(self.id)
 
-        for job in new_jobs:
-            self.__jobs.append(Job(
-                _id=job['id'],
-                command=job['command'],
-                status=job['status'],
-                runner_id=job['runner_id'],
-                db_client=self.__db_client,  # TODO: remove from Job instance definition?
-            ))
-
-        for job in self.jobs:
+        for job in self.__jobs:
             job.status = JobStatus.PENDING
+            self.__job_db.save_job(job)
 
-    @classmethod
-    def run_job(cls, job):
+    def run_job(self, job):
         """
         Runs job
 
         :return:
         """
         job.status = JobStatus.RUNNING
+        self.__job_db.save_job(job)
+
         job_result = subprocess.run(job.command.split())
 
         if job_result.returncode == 0:
             job.status = JobStatus.SUCCESS
         else:
             job.status = JobStatus.FAILED
+
+        self.__job_db.save_job(job)
 
         return job_result
 
@@ -116,6 +92,7 @@ class Runner:
 
             if self.jobs:
                 self.status = RunnerStatus.BUSY
+                self.__runner_db.save_runner(self)
 
                 for job in self.jobs:
                     job_result = self.run_job(job)
@@ -124,6 +101,7 @@ class Runner:
                     job_returncode = job_result.returncode
 
                 self.status = RunnerStatus.UP
+                self.__runner_db.save_runner(self)
             else:
                 time.sleep(60)
 
@@ -132,6 +110,35 @@ class RunnerStatus(Enum):
     UP = 'up'
     BUSY = 'busy'
     DOWN = 'down'
+
+
+class RunnerDB:
+    def __init__(self, db_client):
+        self.db_client = db_client
+
+    def get_runner(self, _id, runner_db, job_db):
+        data = {
+            'class': 'Runner',
+            'id': _id,
+            'attrs': {},
+        }
+        runner = self.db_client.send_request('list', json.dumps(data))
+        return Runner(
+            _id=runner['id'],
+            status=runner['status'],
+            runner_db=runner_db,
+            job_db=job_db,
+        )
+
+    def save_runner(self, runner):
+        data = {
+            'class': 'Job',
+            'id': runner.id,
+            'attrs': {
+                'status': runner.status.value,
+            },
+        }
+        self.db_client.send_request('update', json.dumps(data))
 
 
 def init_argparse():
@@ -144,7 +151,15 @@ def init_argparse():
 def main():
     parser = init_argparse()
     args = parser.parse_args()
-    runner = Runner(args.runner_id, args.db_client)
+
+    db_client = dbclient.get_client(args.db_client)
+    db_client.set_credentials()
+    db_client.connect()
+
+    runner_db = RunnerDB(db_client)
+    job_db = JobDB(db_client)
+
+    runner = runner_db.get_runner(args.runner_id, runner_db, job_db)
     runner.run()
 
 
