@@ -3,13 +3,13 @@ from enum import Enum
 
 
 class Job:
-    def __init__(self, _id, command, status, runner_id, db_client):
+    def __init__(self, _id, _type, command, task, status, runner_id):
         self.id = _id
+        self.type = _type
+        self.task = task
         self.command = command
         self._status = status
         self.runner_id = runner_id
-
-        self.__db_client = db_client  # TODO: remove from Job instance definition?
 
     def __repr__(self):
         return f'Job id={self.id} with status={self.status} is appointed to runner id={self.runner_id}'
@@ -25,22 +25,13 @@ class Job:
     @status.setter
     def status(self, new_status):
         """
-        Sets job status, also updates status in DB
+        Sets job status
 
         """
         if new_status not in JobStatus:
             raise ValueError(f'Job status {new_status.value} is not allowed')
 
         self._status = new_status
-
-        data = {
-            'class': 'Job',
-            'id': self.id,
-            'attrs': {
-                'status': self._status.value,
-            },
-        }
-        self.__db_client.send_request('update', json.dumps(data))
 
 
 class JobStatus(Enum):
@@ -49,3 +40,71 @@ class JobStatus(Enum):
     RUNNING = 'running'
     FAILED = 'failed'
     SUCCESS = 'success'
+
+
+class JobDB:
+    def __init__(self, db_client):
+        self.db_client = db_client
+
+    def get_job(self, _id):
+        """
+        Gets job from DB and returns Job instance
+
+        """
+        data = {
+            'class': 'Job',
+            'id': _id,
+            'attrs': {},
+        }
+        job = self.db_client.send_request('list', json.dumps(data))
+
+        return Job(
+            _id=job['id'],
+            _type=job['type'],
+            task=job['task'],
+            command=job['command'],
+            status=job['status'],
+            runner_id=job['runner'],
+        )
+
+    def get_runner_jobs(self, runner_id):
+        """
+        Gets new jobs from DB that are assigned to runner and returns list of Job instances
+
+        """
+
+        data = {
+            'class': 'Job',
+            'attrs': {
+                'runner': runner_id,
+                'status': JobStatus.NEW.value,
+            },
+        }
+        jobs = self.db_client.send_request('list', json.dumps(data))
+
+        return [Job(
+            _id=job['id'],
+            _type=job['type'],
+            task=job['task'],
+            command=job['command'],
+            status=JobStatus.NEW,
+            runner_id=job['runner'],
+        ) for job in jobs]
+
+    def save_job(self, job):
+        """
+        Updates job in DB (only updates status now, but needed to specify all required attrs)
+
+        """
+        data = {
+            'class': 'Job',
+            'id': job.id,
+            'attrs': {
+                'type': job.type,
+                'task': job.task,
+                'command': job.command,
+                'status': job.status.value,
+                'runner': job.runner_id,
+            },
+        }
+        self.db_client.send_request('update', json.dumps(data))
