@@ -3,11 +3,12 @@ from enum import Enum
 
 
 class Job:
-    def __init__(self, _id, _type, command, task, status, runner_id):
+    def __init__(self, _id, _type, task, command, input_parameters, status, runner_id):
         self.id = _id
         self.type = _type
         self.task = task
         self.command = command
+        self.input_parameters = input_parameters
         self._status = status
         self.runner_id = runner_id
 
@@ -63,6 +64,7 @@ class JobDB:
             _type=job['type'],
             task=job['task'],
             command=job['command'],
+            input_parameters=job['inputParameters'],
             status=job['status'],
             runner_id=job['runner'],
         )
