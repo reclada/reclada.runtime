@@ -1,22 +1,29 @@
 import argparse
 import json
+import os.path
 import subprocess
 import time
 from enum import Enum
 
 from srv.dbclient.dbclient_factory import dbclient
 from srv.job.job import JobStatus, JobDB
+from srv.s3.s3 import S3
+
+INPUT_PATH = '/mnt/input/'
+OUTPUT_PATH = '/mnt/output/'
 
 
 class Runner:
     """
     Gets jobs from DB and runs them
     """
-    def __init__(self, _id, status, runner_db, job_db):
+    def __init__(self, _id, status, runner_db, job_db, s3):
         self.id = _id
         self._status = status
         self.__runner_db = runner_db
         self.__job_db = job_db
+        self.__s3 = s3
+
         self.__jobs = []
 
     def __repr__(self):
@@ -66,11 +73,18 @@ class Runner:
         Runs job
 
         """
+        # TODO: temporary solution, replace with the additional job in the pipeline?
+        # Download file and replace file URI param with local path
+        s3_uri = job.input_parameters[0]
+        file_path = self.__s3.copy_file_to_local(s3_uri, os.path.join(INPUT_PATH, job.id))
+        job.input_parameters = [file_path, os.path.join(OUTPUT_PATH, job.id)]
+
         # Updates job status in DB to "running"
         job.status = JobStatus.RUNNING
         self.__job_db.save_job(job)
 
-        job_result = subprocess.run(job.command.split())
+        args = job.command.split() + job.input_parameters
+        job_result = subprocess.run(args)
 
         # Updates job status in DB depending on the job return code
         if job_result.returncode == 0:
@@ -117,7 +131,7 @@ class RunnerDB:
     def __init__(self, db_client):
         self.db_client = db_client
 
-    def get_runner(self, _id, runner_db, job_db):
+    def get_runner(self, _id, runner_db, job_db, s3):
         """
         Gets runner from DB and returns Runner instance
 
@@ -134,6 +148,7 @@ class RunnerDB:
             status=runner['status'],
             runner_db=runner_db,
             job_db=job_db,
+            s3=s3,
         )
 
     def save_runner(self, runner):
@@ -168,8 +183,9 @@ def main():
 
     runner_db = RunnerDB(db_client)
     job_db = JobDB(db_client)
+    s3 = S3
 
-    runner = runner_db.get_runner(args.runner_id, runner_db, job_db)
+    runner = runner_db.get_runner(args.runner_id, runner_db, job_db, s3)
     runner.run()
 
 
