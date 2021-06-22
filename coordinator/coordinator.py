@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from multiprocessing import Queue
 from stage.stage_factory import stage
 from mb.mbclient_factory import mbclient
@@ -5,6 +6,7 @@ from db.dbclient_factory import dbclient
 from collections import namedtuple
 from enum import Enum
 import json
+import click
 
 Stage = namedtuple("Stage", "type reference runners")
 Runner = namedtuple("Runner", "id number_of_jobs state")
@@ -245,9 +247,14 @@ class JobDB():
             raise ex
 
 
-
-if __name__ == "__main__":
-
-    coordinator = Coordinator("DUMMY", "POSTGRESQL", "POSTGRESQL")
+@click.command()
+@click.option('-platform', required=True, type=str)
+@click.option('-database', required=True, type=str)
+@click.option('-messenger', required=True, type=str)
+def run(platform, database, messenger):
+    coordinator = Coordinator(platform, database, messenger)
     coordinator.start()
 
+
+if __name__ == "__main__":
+    run()
