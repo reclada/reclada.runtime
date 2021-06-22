@@ -79,19 +79,20 @@ class JobDB:
             'class': 'Job',
             'attrs': {
                 'runner': runner_id,
-                'status': JobStatus.NEW.value,
+                'status': JobStatus.PENDING.value,
             },
         }
-        jobs = self.db_client.send_request('list', json.dumps(data))
+        jobs = self.db_client.send_request('list', json.dumps(data))[0][0]
 
         return [Job(
             _id=job['id'],
-            _type=job['type'],
-            task=job['task'],
-            command=job['command'],
+            _type=job['attrs']['type'],
+            task=job['attrs']['task'],
+            command=job['attrs']['command'],
+            input_parameters=job['attrs']['inputParameters'],
             status=JobStatus.NEW,
-            runner_id=job['runner'],
-        ) for job in jobs]
+            runner_id=job['attrs']['runner'],
+        ) for job in jobs if job.get('attrs').get('inputParameters')]  # TODO: proper inputParameters check
 
     def save_job(self, job):
         """
@@ -105,6 +106,7 @@ class JobDB:
                 'type': job.type,
                 'task': job.task,
                 'command': job.command,
+                'input_parameters': job.input_parameters,
                 'status': job.status.value,
                 'runner': job.runner_id,
             },
