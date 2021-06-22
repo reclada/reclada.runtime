@@ -1,5 +1,5 @@
 from stage.dummy_platform import DummyPlatform
-
+from stage.domino_platform import DominoPlatform
 
 class StageFactory:
     """
@@ -30,3 +30,4 @@ class StageFactory:
 stage = StageFactory()
 stage.stage_register('DUMMY', DummyPlatform)
 stage.stage_register('shell', DummyPlatform)
+stage.stage_register('DOMINO',DominoPlatform)

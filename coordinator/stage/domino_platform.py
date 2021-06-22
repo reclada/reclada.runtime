@@ -1,9 +1,6 @@
 import os
-
 import requests
-
-from stage import Stage
-
+from stage.stage import Stage
 
 class DominoPlatform(Stage):
     def create_stage(self, type_of_stage):
