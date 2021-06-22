@@ -20,7 +20,7 @@ class Runner:
     def __init__(self, _id, status, command, _type, task, environment, runner_db, job_db, s3):
         self.id = _id
         self._status = status
-        self._command = command
+        self.command = command
         self.type = _type
         self.task = task
         self.environment = environment
@@ -166,7 +166,7 @@ class RunnerDB:
             'id': runner.id,
             'attrs': {
                 'status': runner.status.value,
-                'command': runner._command,
+                'command': runner.command,
                 'type': runner.type,
                 'task': runner.task,
                 'environment': runner.environment,
