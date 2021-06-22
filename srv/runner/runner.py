@@ -188,6 +188,7 @@ def main():
 
     db_client = dbclient.get_client(args.db_client)
     db_client.set_credentials('DB', None)
+
     db_client.connect()
 
     runner_db = RunnerDB(db_client)
