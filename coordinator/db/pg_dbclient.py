@@ -1,7 +1,7 @@
-from dbclient import DBClient
+from db.dbclient import DBClient
 import os
 import psycopg2 as ps
-from ..resource import Resource
+from resource import Resource
 
 class PgDBClient(DBClient):
 
@@ -20,7 +20,7 @@ class PgDBClient(DBClient):
         :param body: a json object with parameters of the request
         """
         cursor = self._db_instance.cursor()
-        cursor.callproc(f"reclada_object.{function_name}", [body])
+        cursor.callproc(f"reclada_object.{function_name}", [body,])
         return cursor.fetchall()
 
     def connect(self):
