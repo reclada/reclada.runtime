@@ -2,7 +2,7 @@ import pgnotify_u as pgc
 import signal
 import os
 from multiprocessing import Process, Queue
-from mb.mbclient import MBClient
+from mb_client.mbclient import MBClient
 from resource import Resource
 
 SIGNALS_TO_HANDLE = [signal.SIGINT, signal.SIGTERM]

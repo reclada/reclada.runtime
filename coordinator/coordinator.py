@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 from multiprocessing import Queue
 from stage.stage_factory import stage
-from mb.mbclient_factory import mbclient
-from db.dbclient_factory import dbclient
+from mb_client.mbclient_factory import mbclient
+from db_client.dbclient_factory import dbclient
 from collections import namedtuple
 from enum import Enum
 import json

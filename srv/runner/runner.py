@@ -5,7 +5,7 @@ import subprocess
 import time
 from enum import Enum
 
-from srv.dbclient.dbclient_factory import dbclient
+from db_client.dbclient_factory import dbclient
 from srv.job.job import JobStatus, JobDB
 from srv.s3.s3 import S3
 
@@ -178,7 +178,7 @@ def main():
     args = parser.parse_args()
 
     db_client = dbclient.get_client(args.db_client)
-    db_client.set_credentials()
+    db_client.set_credentials("DB", None)
     db_client.connect()
 
     runner_db = RunnerDB(db_client)

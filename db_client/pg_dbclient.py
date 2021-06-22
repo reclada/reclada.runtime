@@ -1,7 +1,7 @@
-from db.dbclient import DBClient
+from db_client.dbclient import DBClient
 import os
 import psycopg2 as ps
-from resource import Resource
+from coordinator.resource import Resource
 
 class PgDBClient(DBClient):
 

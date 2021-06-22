@@ -1,4 +1,4 @@
-from mb.pg_mbclient import PgMBClient
+from mb_client.pg_mbclient import PgMBClient
 
 
 class MBClientFactory:
