@@ -61,7 +61,7 @@ class Coordinator():
             self._jobs_to_process = self._db_jobs.get_new()
             print(f"Reading new jobs from DB")
             # if no jobs were found then stop the loop
-            if self._jobs_to_process[0][0]:
+            if not self._jobs_to_process[0][0]:
                 print(f"No new jobs found in DB")
                 break
 
