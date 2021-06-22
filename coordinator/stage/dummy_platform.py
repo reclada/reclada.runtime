@@ -1,4 +1,4 @@
-from stage import Stage
+from stage.stage import Stage
 
 
 class DummyPlatform(Stage):

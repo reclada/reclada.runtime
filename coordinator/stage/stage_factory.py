@@ -1,4 +1,4 @@
-from dummy_platform import DummyPlatform
+from stage.dummy_platform import DummyPlatform
 
 
 class StageFactory:
