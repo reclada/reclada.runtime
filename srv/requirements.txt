@@ -1,0 +1,12 @@
+certifi==2021.5.30
+chardet==4.0.0
+click==8.0.1
+idna==2.10
+logging-tree==1.9
+logx==0.1.1579232358
+pgnotify-u==0.2
+psycopg2-binary==2.9.1
+PyYAML==5.4.1
+requests==2.25.1
+six==1.16.0
+urllib3==1.26.5
