@@ -76,7 +76,7 @@ class Runner:
         # Download file and replace file URI param with local path
         s3_uri = job.input_parameters[0]['uri']
         file_path = self.__s3.copy_file_to_local(s3_uri, os.path.join(INPUT_PATH, job.id))
-        input_parameters = [file_path, os.path.join(OUTPUT_PATH, job.id), '--verbose=true', '-paddle_on=true']
+        input_parameters = [file_path, os.path.join(OUTPUT_PATH, job.id), '--verbose', 'true', '--paddle_on', 'true']
 
         # Updates job status in DB to "running"
         job.status = JobStatus.RUNNING
