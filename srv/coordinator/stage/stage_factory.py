@@ -1,5 +1,6 @@
 from srv.coordinator.stage.dummy_platform import DummyPlatform
 from srv.coordinator.stage.domino_platform import DominoPlatform
+from srv.coordinator.stage.k8s_platform import K8sPlatform
 
 class StageFactory:
     """
@@ -30,4 +31,5 @@ class StageFactory:
 stage = StageFactory()
 stage.stage_register('DUMMY', DummyPlatform)
 stage.stage_register('shell', DummyPlatform)
-stage.stage_register('DOMINO',DominoPlatform)
+stage.stage_register('DOMINO', DominoPlatform)
+stage.stage_register('K8S', K8sPlatform)
