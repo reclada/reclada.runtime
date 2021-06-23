@@ -47,7 +47,8 @@ def lambda_handler(event, context):
 
             cursor.callproc('reclada_object.create', [json.dumps(data)])
         connection.commit()
-    except Exception:
+    except Exception as err:
+        logger.error(f'An exception occurred while creating datasource: {err}')
         connection.rollback()
     finally:
         cursor.close()
