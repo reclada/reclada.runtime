@@ -1,7 +1,6 @@
-from db_client.dbclient import DBClient
-import os
+from srv.db_client.dbclient import DBClient
 import psycopg2 as ps
-from coordinator.resource import Resource
+from srv.coordinator.resource import Resource
 
 class PgDBClient(DBClient):
 
