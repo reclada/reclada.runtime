@@ -33,10 +33,10 @@ class Resource():
                     self.__setattr__("password", self._resource["password"])
                     return self
             else:
-                self.__setattr__("host", os.getenv("POSTGRES-HOST", "localhost"))
-                self.__setattr__("database", os.getenv("POSTGRES-DB", "database"))
-                self.__setattr__("user", os.getenv("POSTGRES-USER", "user"))
-                self.__setattr__("password", os.getenv("POSTGRES-PASSWORD"))
+                self.__setattr__("host", os.getenv("POSTGRES_HOST", "localhost"))
+                self.__setattr__("database", os.getenv("POSTGRES_DB", "database"))
+                self.__setattr__("user", os.getenv("POSTGRES_USER", "user"))
+                self.__setattr__("password", os.getenv("POSTGRES_PASSWORD"))
                 return self
         elif self._type == "MB":
             if self._resource:
@@ -47,11 +47,11 @@ class Resource():
                 self.__setattr__("channel", self._resource["channel"])
                 return self
             else:
-                self.__setattr__("host", os.getenv("POSTGRES-HOST", "localhost"))
-                self.__setattr__("database", os.getenv("POSTGRES-DB", "database"))
-                self.__setattr__("user", os.getenv("POSTGRES-USER", "user"))
-                self.__setattr__("password", os.getenv("POSTGRES-PASSWORD"))
-                self.__setattr__("channel", os.getenv("POSTGRES-NOTIFY-CHANNEL"))
+                self.__setattr__("host", os.getenv("POSTGRES_HOST", "localhost"))
+                self.__setattr__("database", os.getenv("POSTGRES_DB", "database"))
+                self.__setattr__("user", os.getenv("POSTGRES_USER", "user"))
+                self.__setattr__("password", os.getenv("POSTGRES_PASSWORD"))
+                self.__setattr__("channel", os.getenv("POSTGRES_NOTIFY_CHANNEL"))
                 return self
 
 

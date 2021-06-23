@@ -1,4 +1,4 @@
-from db_client.pg_dbclient import PgDBClient
+from srv.db_client.pg_dbclient import PgDBClient
 
 
 class DBClientFactory:

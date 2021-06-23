@@ -23,11 +23,15 @@ SELECT reclada_object.create_subclass('{
             },
             "inputParameters": {
               "type": "array",
-              "items": "object"
+              "items": {
+                "type": "object"
+               }
             },
             "outputParameters": {
               "type": "array",
-              "items": "object"
+              "items": {
+                "type": "object"
+               }
             }
         },
         "required": ["task", "status"]

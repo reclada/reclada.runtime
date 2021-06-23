@@ -1,4 +1,4 @@
-from stage.stage import Stage
+from srv.coordinator.stage.stage import Stage
 
 
 class DummyPlatform(Stage):

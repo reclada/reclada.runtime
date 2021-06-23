@@ -1,5 +1,5 @@
-from stage.dummy_platform import DummyPlatform
-from stage.domino_platform import DominoPlatform
+from srv.coordinator.stage.dummy_platform import DummyPlatform
+from srv.coordinator.stage.domino_platform import DominoPlatform
 
 class StageFactory:
     """
