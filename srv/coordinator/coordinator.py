@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 from multiprocessing import Queue
-from stage.stage_factory import stage
-from mb_client.mbclient_factory import mbclient
-from db_client.dbclient_factory import dbclient
+from srv.coordinator.stage.stage_factory import stage
+from srv.mb_client.mbclient_factory import mbclient
+from srv.db_client.dbclient_factory import dbclient
 from collections import namedtuple
 from enum import Enum
 import json
@@ -38,6 +38,10 @@ class Coordinator():
         self._db_client.connect()
         self._db_runner = RunnerDB(self._db_client)
         self._db_jobs = JobDB(self._db_client)
+
+        # before starting poolin we need to check DB
+        # for new jobs
+        self.process_reclada_message(None)
 
         # start the client to receive messages in a separate process
         self._message_client.start()

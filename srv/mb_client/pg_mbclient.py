@@ -1,9 +1,8 @@
 import pgnotify_u as pgc
 import signal
-import os
 from multiprocessing import Process, Queue
-from mb_client.mbclient import MBClient
-from resource import Resource
+from srv.mb_client.mbclient import MBClient
+from srv.coordinator.resource import Resource
 
 SIGNALS_TO_HANDLE = [signal.SIGINT, signal.SIGTERM]
 

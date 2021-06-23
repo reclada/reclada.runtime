@@ -5,7 +5,7 @@ import subprocess
 import time
 from enum import Enum
 
-from db_client.dbclient_factory import dbclient
+from srv.db_client.dbclient_factory import dbclient
 from srv.job.job import JobStatus, JobDB
 from srv.s3.s3 import S3
 
