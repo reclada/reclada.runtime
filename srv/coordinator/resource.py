@@ -27,10 +27,10 @@ class Resource():
         # based on the resource type create credentials for
         # different type of connections
 
-        self.__setattr__("host", self._resource["host"])
-        self.__setattr__("user", self._resource["user"])
-        self.__setattr__("database", self._resource["database"])
-        self.__setattr__("password", self._resource["password"])
+        self.__setattr__("host", "host")
+        self.__setattr__("user", "user")
+        self.__setattr__("database", "database")
+        self.__setattr__("password", "password")
 
         if self._type == "DB":
             self.set_for_db()
