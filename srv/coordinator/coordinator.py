@@ -74,6 +74,8 @@ class Coordinator():
                 # finding the type of the staging
                 type_of_staging = job["attrs"]["type"]
                 print(f"New jobs found for platform {job['attrs']['type']}")
+                # find in DB all runners for the specified platform with status DOWN
+                runners = self._db_runner.get_all_down(type_of_staging)
                 # if no stages of the specified type were found then
                 # we need to create that platform
                 if not self._stages.get(type_of_staging, None):
@@ -82,8 +84,6 @@ class Coordinator():
                     print(f"The new platform {type_of_staging} was created.")
                     # adding stage to the coordinator's dictionary
                     self._stages[type_of_staging] = Stage(type_of_staging, ref_stage, [])
-                    # find in DB all runners for the specified platform with status DOWN
-                    runners = self._db_runner.get_all_down(type_of_staging)
                     print(f"Looking for runners in state 'down' in DB")
                     # if runners found in DB then add them to the dictionary
                     if runners[0][0]:
