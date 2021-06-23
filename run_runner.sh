@@ -1,3 +1,4 @@
 #!/usr/bin/bash
 
-python3 -m srv.runner.runner --runner-id="$1" --db-client=POSTGRESQL
+cd "$1"
+python3 -m srv.runner.runner --runner-id="$2" --db-client=POSTGRESQL
