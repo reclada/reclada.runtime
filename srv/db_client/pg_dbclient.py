@@ -28,6 +28,7 @@ class PgDBClient(DBClient):
         """
         self._db_instance = ps.connect(f'dbname={self._database}  user={self._user}\
           password={self._password} host={self._host}')
+        self._db_instance.autocommit=True
 
 
     def set_credentials(self, type, json_file):

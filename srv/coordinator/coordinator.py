@@ -39,6 +39,10 @@ class Coordinator():
         self._db_runner = RunnerDB(self._db_client)
         self._db_jobs = JobDB(self._db_client)
 
+        # before starting poolin we need to check DB
+        # for new jobs
+        self.process_reclada_message(None)
+
         # start the client to receive messages in a separate process
         self._message_client.start()
         while True:

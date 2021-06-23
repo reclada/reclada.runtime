@@ -6,4 +6,4 @@ export POSTGRES_USER="rumyantsev"
 export POSTGRES_PASSWORD="LjgPsdert8we8"
 export POSTGRES_NOTIFY_CHANNEL="test"
 
-python3 -m srv.coordinator.coordinator -platform DOMINO -database POSTGRESQL -messenger POSTGRESQL
+python3 -m srv.coordinator.coordinator -platform shell -database POSTGRESQL -messenger POSTGRESQL
