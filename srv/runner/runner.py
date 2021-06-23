@@ -84,6 +84,8 @@ class Runner:
 
         args = job.command.split() + input_parameters
         job_result = subprocess.run(args)
+        # TODO: delete, for demo purposes only
+        # job_result = subprocess.run(['run_pipeline.sh', file_path, os.path.join(OUTPUT_PATH, job.id), job.id])
 
         # Updates job status in DB depending on the job return code
         if job_result.returncode == 0:
