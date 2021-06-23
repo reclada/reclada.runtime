@@ -1,6 +1,7 @@
 import json as js
 import pathlib as pl
 import os
+from urllib.parse import urlparse
 
 
 class Resource():
@@ -25,33 +26,46 @@ class Resource():
 
         # based on the resource type create credentials for
         # different type of connections
+
+        self.__setattr__("host", self._resource["host"])
+        self.__setattr__("user", self._resource["user"])
+        self.__setattr__("database", self._resource["database"])
+        self.__setattr__("password", self._resource["password"])
+
         if self._type == "DB":
-            if self._resource:
-                    self.__setattr__("host", self._resource["host"])
-                    self.__setattr__("user", self._resource["user"])
-                    self.__setattr__("database", self._resource["database"])
-                    self.__setattr__("password", self._resource["password"])
-                    return self
-            else:
-                self.__setattr__("host", os.getenv("POSTGRES_HOST", "localhost"))
-                self.__setattr__("database", os.getenv("POSTGRES_DB", "database"))
-                self.__setattr__("user", os.getenv("POSTGRES_USER", "user"))
-                self.__setattr__("password", os.getenv("POSTGRES_PASSWORD"))
-                return self
+            self.set_for_db()
+            return self
         elif self._type == "MB":
-            if self._resource:
-                self.__setattr__("host", self._resource["host"])
-                self.__setattr__("user", self._resource["user"])
-                self.__setattr__("database", self._resource["database"])
-                self.__setattr__("password", self._resource["password"])
-                self.__setattr__("channel", self._resource["channel"])
-                return self
-            else:
-                self.__setattr__("host", os.getenv("POSTGRES_HOST", "localhost"))
-                self.__setattr__("database", os.getenv("POSTGRES_DB", "database"))
-                self.__setattr__("user", os.getenv("POSTGRES_USER", "user"))
-                self.__setattr__("password", os.getenv("POSTGRES_PASSWORD"))
-                self.__setattr__("channel", os.getenv("POSTGRES_NOTIFY_CHANNEL"))
-                return self
+            self.set_for_mb()
 
+        return self
 
+    def set_for_db(self):
+        if self._resource:
+            self.set_from_resource()
+        else:
+            self.set_from_uri()
+
+    def set_from_uri(self):
+        database_url = os.getenv("DB_URI", None)
+        if database_url:
+            creds = urlparse(database_url)
+            self.__setattr__("host", creds.hostname)
+            self.__setattr__("database", creds.path[1:])
+            self.__setattr__("user", creds.username)
+            self.__setattr__("password", creds.password)
+
+    def set_from_resource(self):
+        if self._resource:
+            self.__setattr__("host", self._resource["host"])
+            self.__setattr__("user", self._resource["user"])
+            self.__setattr__("database", self._resource["database"])
+            self.__setattr__("password", self._resource["password"])
+
+    def set_for_mb(self):
+        if self._resource:
+            self.set_from_resource()
+            self.__setattr__("channel", self._resource["channel"])
+        else:
+            self.set_from_uri()
+            self.__setattr__("channel", os.getenv("POSTGRES_NOTIFY_CHANNEL"))
