@@ -1,7 +1,7 @@
 ##### **RUN Coordinator**
 To run coordinator:
 
-_python3 -m srv.coordinator.coordinator -platform <platform> -database <database> -messenger <messenger>_
+_python3 -m srv.coordinator.coordinator -platform `<platform>` -database `<database>` -messenger `<messenger>`_
 
 This command needs to be run in the reclada_runtime project folder
 

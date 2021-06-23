@@ -1,7 +1,7 @@
 ##### **RUN Runner**
 To run runner manually:
 
-_python3 -m srv.runner.runner --runner-id <runner_id> --db-client <database client>_
+_python3 -m srv.runner.runner --runner-id `<runner_id>` --db-client `<database client>`_
 
 This command needs to be run in the reclada_runtime project folder
 
