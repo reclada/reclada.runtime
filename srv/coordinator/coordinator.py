@@ -38,10 +38,10 @@ class Coordinator():
         self._message_client.set_queue(self._queue)
         self._db_client.set_credentials("DB", None)
         self._db_client.connect()
-        self._db_runner = RunnerDB(self._db_client)
-        self._db_jobs = JobDB(self._db_client)
+        self._db_runner = RunnerDB(self._db_client, self._log)
+        self._db_jobs = JobDB(self._db_client, self._log)
 
-        # before starting poolin we need to check DB
+        # before starting pooling we need to check DB
         # for new jobs
         self.process_reclada_message(None)
 
@@ -183,8 +183,9 @@ class RunnerDB():
     """
         This class organize the work with DB for reclada runner objects
     """
-    def __init__(self, db_connection):
+    def __init__(self, db_connection, log):
         self._db_connection = db_connection
+        self._log = log
 
     def get_all_down(self, type_staging):
         """
@@ -198,7 +199,7 @@ class RunnerDB():
             # sending request to DB to select runner objects from DB
             runners = self._db_connection.send_request("list", json.dumps(select_json))
         except Exception as ex:
-            print(format(ex))
+            self._log.error(format(ex))
             raise ex
         return runners
 
@@ -212,7 +213,7 @@ class RunnerDB():
             # sending request to DB to create reclada runner object
             self._db_connection.send_request("update", json.dumps(runner[0]))
         except Exception as ex:
-            print(format(ex))
+            self._log.error(format(ex))
             raise ex
 
 
@@ -220,8 +221,9 @@ class JobDB():
     """
         This class organize the work with DB for job objects
     """
-    def __init__(self, db_connection):
+    def __init__(self, db_connection, log):
         self._db_connection = db_connection
+        self._log = log
 
     def get_new(self):
         """
@@ -234,7 +236,7 @@ class JobDB():
             # sending request to DB to select all new jobs
             jobs_new = self._db_connection.send_request("list", json.dumps(jobs_new))
         except Exception as ex:
-            print(format(ex))
+            self._log.error(format(ex))
             raise ex
 
         return jobs_new
@@ -248,7 +250,7 @@ class JobDB():
             # sending a request to create an updated version of the job
             self._db_connection.send_request("update", json.dumps(job))
         except Exception as ex:
-            print(format(ex))
+            self._log.error(format(ex))
             raise ex
 
 
@@ -260,7 +262,7 @@ class JobDB():
 def run(platform, database, messenger, verbose):
 
     # checking if verbose option was specified and
-    # if it was then create the logger
+    # if it was then create the logger for debugging
     if verbose:
         lg = log.get_logger("coordinator", logging.DEBUG)
     else:
