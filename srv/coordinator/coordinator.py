@@ -7,19 +7,21 @@ from collections import namedtuple
 from enum import Enum
 import json
 import click
+import coordinator_logger as log
+import logging
 
 Stage = namedtuple("Stage", "type reference runners")
 Runner = namedtuple("Runner", "id number_of_jobs state")
 
 class RunnerState(Enum):
     NEW = 1
-    BUSI = 2
-    DOWN = 3
-    IDLE = 4
+    DOWN = 2
+    IDLE = 3
 
 class Coordinator():
 
-    def __init__(self, platform, message_client, database_client):
+    def __init__(self, platform, message_client, database_client, lg):
+        self._log = lg
         self._stage = stage.get_stage(platform)
         self._message_client = mbclient.get_client(message_client)
         self._db_client = dbclient.get_client(database_client)
@@ -47,7 +49,7 @@ class Coordinator():
         self._message_client.start()
         while True:
             message = self._queue.get(block=True)
-            print(f"The new notification was received.")
+            self._log.debug(f"A new notification was received.")
             self.process_reclada_message(message)
 
         self._message_client.join()
@@ -63,17 +65,17 @@ class Coordinator():
         while True:
             # read new jobs from the database
             self._jobs_to_process = self._db_jobs.get_new()
-            print(f"Reading new jobs from DB")
+            self._log.debug(f"Reading new jobs from DB")
             # if no jobs were found then stop the loop
             if not self._jobs_to_process[0][0]:
-                print(f"No new jobs found in DB")
+                self._log.debug(f"No new jobs found in DB")
                 break
 
             # process found new jobs
             for job in self._jobs_to_process[0][0]:
                 # finding the type of the staging
                 type_of_staging = job["attrs"]["type"]
-                print(f"New jobs found for platform {job['attrs']['type']}")
+                self._log.debug(f"New jobs found for resource {job['attrs']['type']}")
                 # find in DB all runners for the specified platform with status DOWN
                 runners = self._db_runner.get_all_down(type_of_staging)
                 # if no stages of the specified type were found then
@@ -81,15 +83,14 @@ class Coordinator():
                 if not self._stages.get(type_of_staging, None):
                     # creating stage on the specified platform
                     ref_stage = self._stage.create_stage(type_of_staging)
-                    print(f"The new platform {type_of_staging} was created.")
+                    self._log.debug(f"The new resource {type_of_staging} was created.")
                     # adding stage to the coordinator's dictionary
                     self._stages[type_of_staging] = Stage(type_of_staging, ref_stage, [])
-                    print(f"Looking for runners in state 'down' in DB")
                     # if runners found in DB then add them to the dictionary
                     if runners[0][0]:
                         runners_found = [Runner(run["id"], 0, run["attrs"]["status"]) for run in runners[0][0]]
                         self._stages[type_of_staging].runners.extend(runners_found)
-                        print(f"Found {len(runners_found)} runners")
+                        self._log.debug(f"Found {len(runners_found)} runners")
 
                 # find the suitable runner for the job in the dictionary
                 runner = self.find_runner(type_of_staging)
@@ -101,7 +102,7 @@ class Coordinator():
                         runner = runners_down[0]
                         # create the runner of the platform
                         self._stage.create_runner(type_of_staging, runner.id, self._database_type)
-                        print(f"Runner with id {runner.id} was created.")
+                        self._log.debug(f"Runner with id {runner.id} was created.")
                         # preparing information for updating runner in the stage dictionary
                         runner = runner._replace(state="up")
                         jobs_number = runner.number_of_jobs + 1
@@ -113,27 +114,27 @@ class Coordinator():
                         runner_to_save[0]["attrs"]["status"] = "up"
                         # saving the new state of runner in DB
                         self._db_runner.save(runner_to_save)
-                        print(f"The status for runner {runner.id} was changed to 'up'")
+                        self._log.debug(f"The status for runner {runner.id} was changed to 'up'")
                     else:
-                        print(f"No idle or down runners were found.")
+                        self._log.debug(f"No idle or down runners were found.")
                         runner = self.find_runner_minimum_jobs(type_of_staging)
-                        print(f"Trying to find runners with minimum jobs")
+                        self._log.debug(f"Trying to find runners with minimum jobs")
                         if runner:
                             jobs_number = runner.number_of_jobs + 1
                             runner = runner._replace(number_of_jobs = jobs_number)
                             self.update_runner(type_of_staging, runner)
-                            print(f"To runner {runner.id} a new job was assigned")
+                            self._log.debug(f"The job with id {job[id]} was assigned to runner with id {runner.id}")
 
                 # here we need to update reclada jobs with the runner id if runner exists
                 if runner:
                     job["attrs"]["runner"] = runner.id
                     job["attrs"]["status"] = "pending"
                     self._db_jobs.save(job)
-                    print(f"The job {job['id']} was attached to the runner {runner.id}")
+                    self._log.debug(f"The job with id {job['id']} was assigned to the runner {runner.id}")
                 else:
                     job["attrs"]["status"] = "failed"
                     self._db_jobs.save(job)
-                    print(f"No runners were found for platform {type_of_staging}")
+                    self._log.debug(f"No runners were found for resource {type_of_staging}")
 
     def find_runner(self, type_of_staging):
         """
@@ -255,8 +256,19 @@ class JobDB():
 @click.option('-platform', required=True, type=str)
 @click.option('-database', required=True, type=str)
 @click.option('-messenger', required=True, type=str)
-def run(platform, database, messenger):
-    coordinator = Coordinator(platform, database, messenger)
+@click.option('-verbose', count=True)
+def run(platform, database, messenger, verbose):
+
+    # checking if verbose option was specified and
+    # if it was then create the logger
+    if verbose:
+        lg = log.get_logger("coordinator", logging.DEBUG)
+    else:
+        lg = log.get_logger('coordinator', logging.ERROR)
+
+    lg.debug("Coordinator started")
+    # starting coordinator
+    coordinator = Coordinator(platform, database, messenger, lg)
     coordinator.start()
 
 

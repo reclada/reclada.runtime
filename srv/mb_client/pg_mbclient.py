@@ -41,9 +41,6 @@ class PgMBClient(MBClient, Process):
             if n is not None:
                 # a message arrived and needs to be processed
                 self.handle_request(n.payload)
-            elif n is None:
-                # timeout expired and there are no messages  to process
-                print("[x] Awaiting requests")
 
     def set_credentials(self, type, json_file):
         """
