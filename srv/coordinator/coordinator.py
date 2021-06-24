@@ -7,7 +7,7 @@ from collections import namedtuple
 from enum import Enum
 import json
 import click
-import coordinator_logger as log
+import srv.logger.logger as log
 import logging
 
 Stage = namedtuple("Stage", "type reference runners")
@@ -264,9 +264,9 @@ def run(platform, database, messenger, verbose):
     # checking if verbose option was specified and
     # if it was then create the logger for debugging
     if verbose:
-        lg = log.get_logger("coordinator", logging.DEBUG)
+        lg = log.get_logger("coordinator", logging.DEBUG, "coordinator.log")
     else:
-        lg = log.get_logger('coordinator', logging.ERROR)
+        lg = log.get_logger('coordinator', logging.ERROR, "coordinator.log")
 
     lg.debug("Coordinator started")
     # starting coordinator
