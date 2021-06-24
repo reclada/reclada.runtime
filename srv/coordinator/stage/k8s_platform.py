@@ -33,10 +33,7 @@ class K8s:
 
     @property
     def image_repo(self):
-        repo = os.getenv('K8S_IMAGE_REPO')
-        if repo:
-            return repo.rstrip('/') + '/'
-        return ''
+        return os.getenv('K8S_IMAGE_REPO')
 
     def run(self, command, job_id):
         job_json = {
@@ -57,7 +54,7 @@ class K8s:
                     'spec': {
                         'containers': [{
                             'name': self.image,
-                            'image': self.image_repo + self.image,
+                            'image': self.image_repo,
                             'command': command,
                         }],
                     },
