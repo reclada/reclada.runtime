@@ -72,20 +72,14 @@ class Runner:
         Runs job
 
         """
-        # TODO: temporary solution, replace with the additional job in the pipeline?
-        # Download file and replace file URI param with local path
-        s3_uri = job.input_parameters[0]['uri']
-        file_path = self.__s3.copy_file_to_local(s3_uri, os.path.join(INPUT_PATH, job.id))
-        input_parameters = [file_path, os.path.join(OUTPUT_PATH, job.id), '--verbose', 'true', '--paddle_on', 'true']
-
         # Updates job status in DB to "running"
         job.status = JobStatus.RUNNING
         self.__job_db.save_job(job)
 
-        args = job.command.split() + input_parameters
-        job_result = subprocess.run(args)
-        # TODO: delete, for demo purposes only
-        # job_result = subprocess.run(['run_pipeline.sh', file_path, os.path.join(OUTPUT_PATH, job.id), job.id])
+        # TODO: resolve all input parameters
+        s3_uri = job.input_parameters[0]['uri']
+        command = job.command.split()
+        job_result = subprocess.run(command + [s3_uri, job.id])
 
         # Updates job status in DB depending on the job return code
         if job_result.returncode == 0:
