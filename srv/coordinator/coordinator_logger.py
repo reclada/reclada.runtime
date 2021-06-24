@@ -2,7 +2,7 @@ import logging
 import sys
 from logging.handlers import TimedRotatingFileHandler
 
-FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
+FORMATTER = logging.Formatter("%(asctime)s — %(funcName)s — %(levelname)s — %(message)s")
 CONSOLE_FORMATTER = logging.Formatter("[%(levelname)s]: %(message)s")
 LOG_FILE = "coordinator.log"
 
