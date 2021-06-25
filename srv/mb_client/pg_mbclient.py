@@ -34,13 +34,16 @@ class PgMBClient(MBClient, Process):
         for n in pgc.await_pg_notifications(
                 self._pgc,
                 [self._channels],
-                timeout=10,
+                timeout=60,
                 yield_on_timeout=True,
                 handle_signals=SIGNALS_TO_HANDLE,
         ):
             if n is not None:
                 # a message arrived and needs to be processed
                 self.handle_request(n.payload)
+            else:
+                # no message arrived before timeout expired
+                self.handle_request(0)
 
     def set_credentials(self, type, json_file):
         """
