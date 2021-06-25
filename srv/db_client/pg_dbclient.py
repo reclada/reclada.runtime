@@ -27,7 +27,7 @@ class PgDBClient(DBClient):
             This method connects to DB
         """
         self._db_instance = ps.connect(f'dbname={self._database}  user={self._user}\
-          password={self._password} host={self._host}')
+          password={self._password} host={self._host} connect_timeout=0')
         self._db_instance.autocommit=True
 
 
