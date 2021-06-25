@@ -79,7 +79,7 @@ class Runner:
         # TODO: resolve all input parameters
         s3_uri = job.input_parameters[0]['uri']
         command = job.command.split()
-        job_result = subprocess.run(command + [s3_uri, job.id])
+        job_result = subprocess.run(command + [s3_uri, job.id], cwd='/app')
 
         # Updates job status in DB depending on the job return code
         if job_result.returncode == 0:
@@ -96,25 +96,28 @@ class Runner:
 
         """
         while True:
-            self.get_new_jobs()
+            try:
+                self.get_new_jobs()
 
-            if self.jobs:
-                # Updates runner status in DB to "busy" before running jobs
-                # TODO: change schema for runner adding status busy
-                # self.status = RunnerStatus.BUSY
-                # self.__runner_db.save_runner(self)
+                if self.jobs:
+                    # Updates runner status in DB to "busy" before running jobs
+                    # TODO: change schema for runner adding status busy
+                    # self.status = RunnerStatus.BUSY
+                    # self.__runner_db.save_runner(self)
 
-                for job in self.jobs:
-                    job_result = self.run_job(job)
-                    job_stdout = job_result.stdout
-                    job_stderr = job_result.stderr
-                    job_returncode = job_result.returncode
+                    for job in self.jobs:
+                        job_result = self.run_job(job)
+                        job_stdout = job_result.stdout
+                        job_stderr = job_result.stderr
+                        job_returncode = job_result.returncode
 
-                # Updates runner status in DB to "up" when all jobs finished
-                # TODO: uncomment after runner schema change
-                # self.status = RunnerStatus.UP
-                # self.__runner_db.save_runner(self)
-            else:
+                    # Updates runner status in DB to "up" when all jobs finished
+                    # TODO: uncomment after runner schema change
+                    # self.status = RunnerStatus.UP
+                    # self.__runner_db.save_runner(self)
+                else:
+                    time.sleep(10)
+            except Exception:
                 time.sleep(10)
 
 
