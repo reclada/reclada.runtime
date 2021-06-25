@@ -1,18 +1,26 @@
 ##### **RUN Coordinator**
 To run coordinator:
 
-_python3 -m srv.coordinator.coordinator -platform `<platform>` -database `<database>` -messenger `<messenger>`_
+_python3 -m srv.coordinator.coordinator -platform `<platform>` -database `<database>` -messenger `<messenger>` -verbose_
 
 This command needs to be run in the reclada_runtime project folder
+
+_platform_ parameter defines platform on which coordinator runs.
 
 Currently coordinator supports the following platforms:
 - DUMMY to run runners in plain linux environment
 - DOMINO to run runners in Domino environment
 - KS8 to run runners in Kubernetes environment
 
-Database and Messenger clients use DB for storing data and getting notifications. There is only one available
-client now:
+_database_ parameter specifies the database client.
+Currently coordinator supports only PostgreSQL database.
 - POSTGRESQL
+
+_messenger_ parameter specifies the message broker client.
+Currently coordinator uses PostgreSQL notification mechanism to exchange messages
+- POSTGRESQL
+
+_verbose_ optional parameter specifies the type of logging. If this parameter is specified then all debugging information would be logged.
 
 All credentials for connecting to DB are taken from the environment variable DB_URI
 

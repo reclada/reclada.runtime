@@ -35,9 +35,19 @@ class Coordinator():
         """
         # sets credentials to connect to MB
         self._message_client.set_credentials("MB", None)
+        # sets the queue to exchange messages between
+        # broker and coordinator
         self._message_client.set_queue(self._queue)
+        # sets credentials to DB's connection
         self._db_client.set_credentials("DB", None)
-        self._db_client.connect()
+
+        # setting connection to DB
+        try:
+            self._db_client.connect()
+        except Exception as ex:
+            self._log.error(format(ex))
+            raise ex
+
         self._db_runner = RunnerDB(self._db_client, self._log)
         self._db_jobs = JobDB(self._db_client, self._log)
 
@@ -46,11 +56,19 @@ class Coordinator():
         self.process_reclada_message(None)
 
         # start the client to receive messages in a separate process
-        self._message_client.start()
+        try:
+            self._message_client.start()
+        except Exception as ex:
+            self._log.error(format(ex))
+            raise ex
+
         while True:
             message = self._queue.get(block=True)
-            self._log.debug(f"A new notification was received.")
-            self.process_reclada_message(message)
+            if type(message) is int and int(message) == 0:
+                self._log.info("Awaiting for notification")
+            else:
+                self._log.info(f"A new notification was received.")
+                self.process_reclada_message(message)
 
         self._message_client.join()
 
@@ -65,17 +83,17 @@ class Coordinator():
         while True:
             # read new jobs from the database
             self._jobs_to_process = self._db_jobs.get_new()
-            self._log.debug(f"Reading new jobs from DB")
+            self._log.info(f"Reading new jobs from DB")
             # if no jobs were found then stop the loop
             if not self._jobs_to_process[0][0]:
-                self._log.debug(f"No new jobs found in DB")
+                self._log.info(f"No new jobs found in DB")
                 break
 
             # process found new jobs
             for job in self._jobs_to_process[0][0]:
                 # finding the type of the staging
                 type_of_staging = job["attrs"]["type"]
-                self._log.debug(f"New jobs found for resource {job['attrs']['type']}")
+                self._log.info(f"New jobs found for resource {job['attrs']['type']}")
                 # find in DB all runners for the specified platform with status DOWN
                 runners = self._db_runner.get_all_down(type_of_staging)
                 # if no stages of the specified type were found then
@@ -90,7 +108,7 @@ class Coordinator():
                     if runners[0][0]:
                         runners_found = [Runner(run["id"], 0, run["attrs"]["status"]) for run in runners[0][0]]
                         self._stages[type_of_staging].runners.extend(runners_found)
-                        self._log.debug(f"Found {len(runners_found)} runners")
+                        self._log.info(f"Found {len(runners_found)} runners")
 
                 # find the suitable runner for the job in the dictionary
                 runner = self.find_runner(type_of_staging)
@@ -102,7 +120,7 @@ class Coordinator():
                         runner = runners_down[0]
                         # create the runner of the platform
                         self._stage.create_runner(type_of_staging, runner.id, self._database_type)
-                        self._log.debug(f"Runner with id {runner.id} was created.")
+                        self._log.info(f"Runner with id {runner.id} was created.")
                         # preparing information for updating runner in the stage dictionary
                         runner = runner._replace(state="up")
                         jobs_number = runner.number_of_jobs + 1
@@ -123,18 +141,18 @@ class Coordinator():
                             jobs_number = runner.number_of_jobs + 1
                             runner = runner._replace(number_of_jobs = jobs_number)
                             self.update_runner(type_of_staging, runner)
-                            self._log.debug(f"The job with id {job[id]} was assigned to runner with id {runner.id}")
+                            self._log.info(f"The job with id {job[id]} was assigned to runner with id {runner.id}")
 
                 # here we need to update reclada jobs with the runner id if runner exists
                 if runner:
                     job["attrs"]["runner"] = runner.id
                     job["attrs"]["status"] = "pending"
                     self._db_jobs.save(job)
-                    self._log.debug(f"The job with id {job['id']} was assigned to the runner {runner.id}")
+                    self._log.info(f"The job with id {job['id']} was assigned to the runner {runner.id}")
                 else:
                     job["attrs"]["status"] = "failed"
                     self._db_jobs.save(job)
-                    self._log.debug(f"No runners were found for resource {type_of_staging}")
+                    self._log.info(f"No runners were found for resource {type_of_staging}")
 
     def find_runner(self, type_of_staging):
         """
@@ -262,11 +280,12 @@ class JobDB():
 def run(platform, database, messenger, verbose):
 
     # checking if verbose option was specified and
-    # if it was then create the logger for debugging
+    # if it was then create the logger for debugging otherwise
+    # the logger would save only INFO messages
     if verbose:
         lg = log.get_logger("coordinator", logging.DEBUG, "coordinator.log")
     else:
-        lg = log.get_logger('coordinator', logging.ERROR, "coordinator.log")
+        lg = log.get_logger('coordinator', logging.INFO, "coordinator.log")
 
     lg.debug("Coordinator started")
     # starting coordinator
