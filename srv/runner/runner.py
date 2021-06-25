@@ -1,6 +1,5 @@
 import argparse
 import json
-import os.path
 import subprocess
 import time
 from enum import Enum
@@ -8,9 +7,6 @@ from enum import Enum
 from srv.db_client.dbclient_factory import dbclient
 from srv.job.job import JobStatus, JobDB
 from srv.s3.s3 import S3
-
-INPUT_PATH = '/mnt/input/'
-OUTPUT_PATH = '/mnt/output/'
 
 
 class Runner:
@@ -127,6 +123,10 @@ class RunnerStatus(Enum):
     DOWN = 'down'
 
 
+class RunnerError(Exception):
+    pass
+
+
 class RunnerDB:
     def __init__(self, db_client):
         self.db_client = db_client
@@ -141,19 +141,23 @@ class RunnerDB:
             'id': _id,
             'attrs': {},
         }
-        runner = self.db_client.send_request('list', json.dumps(data))[0][0][0]
+        runners = self.db_client.send_request('list', json.dumps(data))[0][0]
 
-        return Runner(
-            _id=runner['id'],
-            status=runner['attrs']['status'],
-            command=runner['attrs']['command'],
-            _type=runner['attrs']['type'],
-            task=runner['attrs']['task'],
-            environment=runner['attrs']['environment'],
-            runner_db=runner_db,
-            job_db=job_db,
-            s3=s3,
-        )
+        if runners is None:
+            raise RunnerError(f'There is no runner with id {id}')
+        else:
+            runner = runners[0]
+            return Runner(
+                _id=runner['id'],
+                status=runner['attrs']['status'],
+                command=runner['attrs']['command'],
+                _type=runner['attrs']['type'],
+                task=runner['attrs']['task'],
+                environment=runner['attrs']['environment'],
+                runner_db=runner_db,
+                job_db=job_db,
+                s3=s3,
+            )
 
     def save_runner(self, runner):
         """

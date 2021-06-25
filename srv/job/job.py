@@ -84,15 +84,18 @@ class JobDB:
         }
         jobs = self.db_client.send_request('list', json.dumps(data))[0][0]
 
-        return [Job(
-            _id=job['id'],
-            _type=job['attrs']['type'],
-            task=job['attrs']['task'],
-            command=job['attrs']['command'],
-            input_parameters=job['attrs']['inputParameters'],
-            status=JobStatus.NEW,
-            runner_id=job['attrs']['runner'],
-        ) for job in jobs if job.get('attrs').get('inputParameters')]  # TODO: proper inputParameters check
+        if jobs is None:
+            return []
+        else:
+            return [Job(
+                _id=job['id'],
+                _type=job['attrs']['type'],
+                task=job['attrs']['task'],
+                command=job['attrs']['command'],
+                input_parameters=job['attrs']['inputParameters'],
+                status=JobStatus.NEW,
+                runner_id=job['attrs']['runner'],
+            ) for job in jobs if job.get('attrs').get('inputParameters')]  # TODO: proper inputParameters check
 
     def save_job(self, job):
         """
