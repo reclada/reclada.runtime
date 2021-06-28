@@ -70,6 +70,12 @@ class K8s:
                             'imagePullPolicy': 'Always',
                             'command': command.split(),
                             'env': self.k8s_envs(),
+                            'resources': {
+                                'limits': {
+                                    'memory': '4Gi',
+                                    'cpu': '2000m',
+                                },
+                            },
                         }],
                     },
                 },
