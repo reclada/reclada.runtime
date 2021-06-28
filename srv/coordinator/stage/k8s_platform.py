@@ -52,7 +52,7 @@ class K8s:
             'apiVersion': 'batch/v1',
             'kind': 'Job',
             'metadata': {
-                'name': self.image,
+                'generateName': f'{self.image}-',
                 'labels': {
                     'job_id': job_id,
                 },
