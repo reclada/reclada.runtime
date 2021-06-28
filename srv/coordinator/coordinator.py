@@ -66,6 +66,10 @@ class Coordinator():
             message = self._queue.get(block=True)
             if type(message) is int and int(message) == 0:
                 self._log.info("Awaiting for notification")
+                # The temporary fix for J&J demo
+                # It needs to be removed when we find out why
+                # notification doesn't go through
+                self.process_reclada_message(message)
             else:
                 self._log.info(f"A new notification was received.")
                 self.process_reclada_message(message)
@@ -287,7 +291,7 @@ def run(platform, database, messenger, verbose):
     else:
         lg = log.get_logger('coordinator', logging.INFO, "coordinator.log")
 
-    lg.debug("Coordinator started")
+    lg.info("Coordinator started")
     # starting coordinator
     coordinator = Coordinator(platform, database, messenger, lg)
     coordinator.start()

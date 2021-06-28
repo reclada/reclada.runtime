@@ -24,8 +24,7 @@ _verbose_ optional parameter specifies the type of logging. If this parameter is
 
 All credentials for connecting to DB are taken from the environment variable DB_URI
 
-The parameter with channel name for messenger needs to be specified 
-in the environment variable POSTGRES_NOTIFY_CHANNEL.
+The parameter with channel name for messenger needs to be specified in the environment variable POSTGRES_NOTIFY_CHANNEL. The default name for the channel that is supposed to notify about arriving new jobs is _job_created_.
 
 For manual launch in Domino use:
 
