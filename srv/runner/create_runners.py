@@ -1,16 +1,19 @@
 import json
 import os
 import uuid
+from urllib.parse import urlparse
 
 import psycopg2
 
 
 def main():
+    credentials = urlparse(os.getenv('DB_URI'))
+
     connection = psycopg2.connect(
-        host=os.getenv('PG_HOST'),
-        database=os.getenv('PG_DATABASE'),
-        user=os.getenv('PG_USER'),
-        password=os.getenv('PG_PASSWORD'),
+        host=credentials.hostname,
+        database=credentials.path[1:],
+        user=credentials.username,
+        password=credentials.password,
     )
 
     for _ in range(5):
@@ -21,7 +24,7 @@ def main():
             'attrs': {
                 'command': '',
                 'status': 'down',
-                'type': 'K8S',
+                'type': 'DOMINO',
                 'task': str(uuid.uuid4()),
                 'environment': str(uuid.uuid4()),
             },
