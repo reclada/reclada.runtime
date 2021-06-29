@@ -5,7 +5,9 @@ _JOB_ID="$2"
 _INPUT_DIR="/mnt/input/${_JOB_ID}"
 _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
 
-DB_URI_QUOTED=`python3 -c "import urllib.parse; print(urllib.parse.quote('$DB_URI'))"`
+# DB_URI_QUOTED=`python3 -c "import urllib.parse; print(urllib.parse.quote('$DB_URI'))"`
+# DB_URI_QUOTED=`python3 -c "import urllib.parse; print('$DB_URI'.replace(urllib.parse.urlparse('$DB_URI').password, urllib.parse.quote(urllib.parse.urlparse('$DB_URI').password)))"`
+DB_URI_QUOTED=`python3 -c "import urllib.parse; parsed = urllib.parse.urlparse('$DB_URI'); print('$DB_URI'.replace(parsed.password, urllib.parse.quote(parsed.password)))"`
 
 
 aws s3 cp ${_S3_FILE_URI} ${_INPUT_DIR}/input.pdf
