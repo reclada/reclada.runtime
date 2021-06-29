@@ -2,6 +2,7 @@ import os
 import requests
 from srv.coordinator.stage.stage import Stage
 
+
 class DominoPlatform(Stage):
     def create_stage(self, type_of_stage):
         pass
@@ -11,10 +12,10 @@ class DominoPlatform(Stage):
 
     def create_runner(self, ref_to_stage, runner_id, db_type):
         domino = Domino()
-        owner = os.getenv('DOMINO_PROJECT_OWNER')
-        project = 'badgerdoc-runner'
-        command = f'python3 /repos/reclada_reclada_runtime/srv/runner/runner.py ' \
-                  f'--runner-id={runner_id} --db-client={db_type}'
+        owner = os.getenv('DOMINO_PROJECT_OWNER')  # defines automatically
+        project = os.getenv('DOMINO_PROJECT_TO_RUN')  # defines manually
+        repo_path = os.getenv('DOMINO_REPO_PATH')  # defines manually
+        command = f'{repo_path}/run_runner.sh {repo_path} {runner_id}'
 
         domino.run(
             owner, project, command, is_direct=True,
@@ -30,8 +31,8 @@ class DominoPlatform(Stage):
 
 class Domino:
     def __init__(self, api_key=None, base_url='https://try.dominodatalab.com/v1/', session=None):
-        self.api_key = api_key or os.getenv('DOMINO_USER_API_KEY')
-        self.base_url = base_url or os.getenv('DOMINO_URL')
+        self.api_key = api_key or os.getenv('DOMINO_USER_API_KEY')  # defines automatically
+        self.base_url = base_url or os.getenv('DOMINO_URL')  # defines manually
         self.session = session or requests.Session()
 
     def _request(self, path, method, params=None, json=None, stream=False, data=None):
