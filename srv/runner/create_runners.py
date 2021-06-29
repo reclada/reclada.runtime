@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import uuid
@@ -6,7 +7,16 @@ from urllib.parse import urlparse
 import psycopg2
 
 
+def init_argparse():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--type')
+    return parser
+
+
 def main():
+    parser = init_argparse()
+    args = parser.parse_args()
+
     credentials = urlparse(os.getenv('DB_URI'))
 
     connection = psycopg2.connect(
@@ -24,7 +34,7 @@ def main():
             'attrs': {
                 'command': '',
                 'status': 'down',
-                'type': 'DOMINO',
+                'type': args.type,
                 'task': str(uuid.uuid4()),
                 'environment': str(uuid.uuid4()),
             },
