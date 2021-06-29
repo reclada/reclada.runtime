@@ -14,7 +14,7 @@ def get_console_handler():
    # setting the format of a logging message
    console_handler.setFormatter(CONSOLE_FORMATTER)
    # setting the type of the messages that gets logged
-   # For console output only error messages would appeare in the output
+   # For console output only error messages appeares in the output
    console_handler.setLevel(logging.INFO)
    return console_handler
 
