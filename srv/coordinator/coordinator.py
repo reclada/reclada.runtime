@@ -145,7 +145,7 @@ class Coordinator():
                             jobs_number = runner.number_of_jobs + 1
                             runner = runner._replace(number_of_jobs = jobs_number)
                             self.update_runner(type_of_staging, runner)
-                            self._log.info(f"The job with id {job[id]} was assigned to runner with id {runner.id}")
+                            self._log.info(f"The job with id {job['id']} was assigned to runner with id {runner.id}")
 
                 # here we need to update reclada jobs with the runner id if runner exists
                 if runner:
