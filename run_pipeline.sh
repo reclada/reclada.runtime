@@ -5,6 +5,9 @@ _JOB_ID="$2"
 _INPUT_DIR="/mnt/input/${_JOB_ID}"
 _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
 
+export PYTHONPATH="${PYTHONPATH}:${BADGERDOC_REPO_PATH}"
+export PYTHONPATH="${PYTHONPATH}:${SCINLP_REPO_PATH}"
+
 DB_URI_QUOTED=`python3 -c "import urllib.parse; parsed = urllib.parse.urlparse('$DB_URI'); print('$DB_URI'.replace(parsed.password, urllib.parse.quote(parsed.password)))"`
 S3_FILE_NAME=`python3 -c "print('$_S3_FILE_URI'.split('/')[-1])"`
 
