@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import os
 import subprocess
 import time
 from enum import Enum
@@ -95,7 +96,7 @@ class Runner:
         command = job.command.split()
         self._logger.info(f'Runner {self.id} is launching job {job.id} with command {job.command} '
                           f'and parameters {job.input_parameters}')
-        job_result = subprocess.run(command + [s3_uri, job.id], cwd='/app')
+        job_result = subprocess.run(command + [s3_uri, job.id], cwd=os.getenv('RECLADA_REPO_PATH'))
 
         # Updates job status in DB depending on the job return code
         if job_result.returncode == 0:
