@@ -3,13 +3,14 @@ import json
 import logging
 import subprocess
 import time
+import click
 from enum import Enum
 
 from srv.db_client.dbclient_factory import dbclient
 from srv.job.job import JobStatus, JobDB
 from srv.logger import logger
 from srv.s3.s3 import S3
-from srv.runner import _version
+from srv.runner._version import __version__
 
 class RunnerError(Exception):
     pass
@@ -192,37 +193,44 @@ class RunnerDB:
         self._logger.info(f'Runner {runner.id} saved in DB')
 
 
-def init_argparse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--version')
-    parser.add_argument('--runner-id')
-    parser.add_argument('--db-client')
-    parser.add_argument('--verbose', default=True)
-    return parser
+@click.command()
+@click.option('--version', count=True)
+@click.option('--runner-id', default='0', type=str)
+@click.option('--db-client', default='POSTGRESQL', type=str)
+@click.option('--verbose', count=True)
+def main(version, runner_id, db_client, verbose):
 
-
-def main():
-    parser = init_argparse()
-    args = parser.parse_args()
-
-    if args.version:
-        print(f"Runner version {_version}.")
+    # if parameter version is specified then
+    # the version number is supposed to be printed
+    if version:
+        print(f"Runner version {__version__}.")
         return
 
-    if args.verbose:
+    # set the logging level based on the specified parameter --verbose
+    if verbose:
         runner_logger = logger.get_logger('runner', logging.DEBUG, 'runner.log')
     else:
         runner_logger = logger.get_logger('runner', logging.INFO, 'runner.log')
 
-    db_client = dbclient.get_client(args.db_client)
+    # create a connection to DB based on the credentials
+    # provided by Resource class
+    db_client = dbclient.get_client(db_client)
     db_client.set_credentials('DB', None)
     db_client.connect()
 
+    # create an instance of RunnerDB class that is used
+    # to work with Runner objects in DB
     runner_db = RunnerDB(db_client, runner_logger)
+    # create an instance of JobDB class that is used
+    # to work with Job objects in DB
     job_db = JobDB(db_client, runner_logger)
+    # create an instance of S3 class that is used
+    # to copy files to/from S3 bucket
     s3 = S3
 
-    runner = runner_db.get_runner(args.runner_id, runner_db, job_db, s3, runner_logger)
+    # reads Runner from DB by runnerid
+    runner = runner_db.get_runner(runner_id, runner_db, job_db, s3, runner_logger)
+    # start processing a job object by runner
     runner.run()
 
 
