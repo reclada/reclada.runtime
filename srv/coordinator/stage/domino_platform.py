@@ -14,7 +14,7 @@ class DominoPlatform(Stage):
         domino = Domino()
         owner = os.getenv('DOMINO_PROJECT_OWNER')  # defines automatically
         project = os.getenv('DOMINO_PROJECT_TO_RUN')  # defines manually
-        repo_path = os.getenv('DOMINO_REPO_PATH')  # defines manually
+        repo_path = os.getenv('RECLADA_REPO_PATH')  # defines manually
         command = [f'{repo_path}/run_runner.sh', repo_path, runner_id]
 
         domino.run(
