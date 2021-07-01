@@ -2,13 +2,11 @@ from setuptools import setup
 
 exec(open("_version.py").read())
 
-setup(name='Distutils',
+setup(name='Reclada Coordinator',
       version=__version__,
-      description='Python Distribution Utilities',
-      author='Greg Ward',
-      author_email='gward@python.net',
-      url='https://www.python.org/sigs/distutils-sig/',
-      packages=['distutils', 'distutils.command'],
+      description='Coordinatort for Reclada project',
+      author='',
+      author_email='',
+      url='',
+      packages=['coordinator', 'coordinator.stage', 'coordinator.db_client', 'coordinator.mb_client', 'coordinator.runner'],
      )
-
-setup(version=__version__)

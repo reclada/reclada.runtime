@@ -9,7 +9,7 @@ from srv.db_client.dbclient_factory import dbclient
 from srv.job.job import JobStatus, JobDB
 from srv.logger import logger
 from srv.s3.s3 import S3
-
+from srv.runner import _version
 
 class RunnerError(Exception):
     pass
@@ -194,6 +194,7 @@ class RunnerDB:
 
 def init_argparse():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--version')
     parser.add_argument('--runner-id')
     parser.add_argument('--db-client')
     parser.add_argument('--verbose', default=True)
@@ -203,6 +204,10 @@ def init_argparse():
 def main():
     parser = init_argparse()
     args = parser.parse_args()
+
+    if args.version:
+        print(f"Runner version {_version}.")
+        return
 
     if args.verbose:
         runner_logger = logger.get_logger('runner', logging.DEBUG, 'runner.log')
