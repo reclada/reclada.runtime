@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import subprocess
+import sys
 import time
 from enum import Enum
 
@@ -113,6 +114,8 @@ class Runner:
         Gets jobs from DB and runs them
 
         """
+        start = time.time()
+
         while True:
             self.get_new_jobs()
 
@@ -121,6 +124,7 @@ class Runner:
                 # TODO: change schema for runner adding status busy
                 # self.status = RunnerStatus.BUSY
                 # self._runner_db.save_runner(self)
+                # self._logger.info(f'Runner {self.id} changed his status to {self.status.value}')
 
                 for job in self.jobs:
                     job_result = self.run_job(job)
@@ -132,9 +136,19 @@ class Runner:
                 # TODO: uncomment after runner schema change
                 # self.status = RunnerStatus.UP
                 # self._runner_db.save_runner(self)
+                # self._logger.info(f'Runner {self.id} changed his status to {self.status.value}')
+                start = time.time()
             else:
                 self._logger.info(f'Runner {self.id} is waiting for new jobs')
                 time.sleep(10)
+
+            stop = time.time()
+            if stop - start > 300:
+                self.status = RunnerStatus.DOWN
+                self._runner_db.save_runner(self)
+                self._logger.info(f'Runner {self.id} is shutting down due to no jobs')
+                self._logger.info(f'Runner {self.id} changed his status to {self.status.value}')
+                sys.exit(0)
 
 
 class RunnerDB:
@@ -175,7 +189,7 @@ class RunnerDB:
 
     def save_runner(self, runner):
         """
-        Updates runner in DB (only updates status now)
+        Updates runner in DB
 
         """
         data = {
