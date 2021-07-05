@@ -97,6 +97,7 @@ class Coordinator():
             for job in self._jobs_to_process[0][0]:
                 # finding the type of the staging
                 type_of_staging = job["attrs"]["type"]
+                type_of_staging = type_of_staging.strip()
                 self._log.info(f"New jobs found for resource {job['attrs']['type']}")
                 # find in DB all runners for the specified platform with status DOWN
                 runners = self._db_runner.get_all_down(type_of_staging)
