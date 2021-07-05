@@ -11,7 +11,8 @@ SELECT reclada_object.create_subclass('{
                 "type": "string",
                 "enum ": [
                     "up",
-                    "down"
+                    "down",
+                    "idle"                  
                 ]
             }
         },
