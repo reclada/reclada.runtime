@@ -1,4 +1,5 @@
-import pgnotify_u as pgc
+from postgresql.notifyman import NotificationManager
+import postgresql
 import signal
 from multiprocessing import Process, Queue
 from srv.mb_client.mbclient import MBClient
@@ -29,21 +30,35 @@ class PgMBClient(MBClient, Process):
         """
             This method gets called to start the loop of message handling
         """
-        self._pgc = pgc.get_dbapi_connection( f'dbname={self._database}  user={self._user}\
-          password={self._password} host={self._host}')
-        for n in pgc.await_pg_notifications(
-                self._pgc,
-                [self._channels],
-                timeout=60,
-                yield_on_timeout=True,
-                handle_signals=SIGNALS_TO_HANDLE,
-        ):
-            if n is not None:
-                # a message arrived and needs to be processed
-                self.handle_request(n.payload)
-            else:
-                # no message arrived before timeout expired
+        # create connection to DB
+        self._pgc = postgresql.open( user=self._user,
+                                     password=self._password,
+                                     host=self._host,
+                                     port=5432,
+                                     database=self._database )
+
+        # create the Notification Manager
+        # to handle notifications from different channels
+        # now we have only one channel
+        self._pgc.listen(self._channels)
+        nm = NotificationManager(self._pgc)
+        nm.settimeout(10)
+        for message in nm:
+            # if timeout happens then we don't need
+            # to process the message
+            if message is None:
                 self.handle_request(0)
+                self._pgc.listen(self._channels)
+                continue
+            # if a message arrived then
+            # we need to check the name of
+            # the channel and if it equals the name
+            # of the channel specified in Resource then
+            # we need to handle it properly
+            db, notifies = message
+            for channel, payload, pid in notifies:
+                if channel == self._channels:
+                    self.handle_request(payload)
 
     def set_credentials(self, type, json_file):
         """
