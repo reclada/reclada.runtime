@@ -18,6 +18,17 @@ class PgDBClient(DBClient):
         :param function_name: a name of a store procedure to be called in DB
         :param body: a json object with parameters of the request
         """
+        # before sending a request to DB we need to check if
+        # the connection is still open and if it is not then
+        # connect to DB again
+        try:
+            # In order to make sure a connection is still valid, read the property connection.isolation_level.
+            # This will raise an OperationalError in case the connection is dead.
+            self._db_instance.isolation_level
+        except ps.OperationalError as oe:
+            self.connect()
+            print(format(oe))
+
         cursor = self._db_instance.cursor()
         cursor.callproc(f"reclada_object.{function_name}", [body,])
         return cursor.fetchall()
@@ -27,7 +38,7 @@ class PgDBClient(DBClient):
             This method connects to DB
         """
         self._db_instance = ps.connect(f'dbname={self._database}  user={self._user}\
-          password={self._password} host={self._host} connect_timeout=0')
+          password={self._password} host={self._host} connect_timeout=1000')
         self._db_instance.autocommit=True
 
 
