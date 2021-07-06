@@ -1,10 +1,10 @@
-import argparse
 import json
 import logging
 import subprocess
 import time
-import click
 from enum import Enum
+
+import click
 
 from srv.db_client.dbclient_factory import dbclient
 from srv.job.job import JobStatus, JobDB
