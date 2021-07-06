@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 from multiprocessing import Queue
+from srv.coordinator._version import __version__
 from srv.coordinator.stage.stage_factory import stage
 from srv.mb_client.mbclient_factory import mbclient
 from srv.db_client.dbclient_factory import dbclient
@@ -277,11 +278,18 @@ class JobDB():
 
 
 @click.command()
-@click.option('-platform', required=True, type=str)
-@click.option('-database', required=True, type=str)
-@click.option('-messenger', required=True, type=str)
+@click.option('-version', count=True)
+@click.option('-platform', default='K8S', type=str)
+@click.option('-database', default='POSTGRESQL', type=str)
+@click.option('-messenger', default='POSTGRESQL', type=str)
 @click.option('-verbose', count=True)
-def run(platform, database, messenger, verbose):
+def run(platform, database, messenger, verbose, version):
+
+    # if version option is specified then
+    # print version number and quit the app
+    if version:
+        print(f"Coordinator version {__version__}")
+        return
 
     # checking if verbose option was specified and
     # if it was then create the logger for debugging otherwise
@@ -291,7 +299,7 @@ def run(platform, database, messenger, verbose):
     else:
         lg = log.get_logger('coordinator', logging.INFO, "coordinator.log")
 
-    lg.info("Coordinator started")
+    lg.info(f"Coordinator v{__version__} started")
     # starting coordinator
     coordinator = Coordinator(platform, database, messenger, lg)
     coordinator.start()
