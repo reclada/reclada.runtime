@@ -299,7 +299,7 @@ def run(platform, database, messenger, verbose, version):
     else:
         lg = log.get_logger('coordinator', logging.INFO, "coordinator.log")
 
-    lg.info("Coordinator started")
+    lg.info(f"Coordinator v{__version__} started")
     # starting coordinator
     coordinator = Coordinator(platform, database, messenger, lg)
     coordinator.start()
