@@ -228,7 +228,9 @@ def main(version, runner_id, db_client, verbose):
     # to copy files to/from S3 bucket
     s3 = S3
 
-    # reads Runner from DB by runnerid
+    runner_logger.info(f"Runner v{__version__} started.")
+
+    # reads Runner from DB by runner_id
     runner = runner_db.get_runner(runner_id, runner_db, job_db, s3, runner_logger)
     # start processing a job object by runner
     runner.run()
