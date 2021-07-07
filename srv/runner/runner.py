@@ -20,7 +20,7 @@ class RunnerError(Exception):
 
 class RunnerStatus(Enum):
     UP = 'up'
-    BUSY = 'busy'
+    IDLE = 'idle'
     DOWN = 'down'
 
 
@@ -88,8 +88,9 @@ class Runner:
         Runs job
 
         """
-        # Updates job status in DB to "running"
+        # Updates job status
         job.status = JobStatus.RUNNING
+        # updates statuses of Job in DB
         self._job_db.save_job(job)
         self._logger.info(f'Runner {self.id} changed job {job.id} status to {job.status.value}')
 
@@ -122,11 +123,11 @@ class Runner:
 
             if self.jobs:
                 # Updates runner status in DB to "busy" before running jobs
-                # TODO: change schema for runner adding status busy
-                # self.status = RunnerStatus.BUSY
-                # self._runner_db.save_runner(self)
-                # self._logger.info(f'Runner {self.id} changed his status to {self.status.value}')
+                self.status = RunnerStatus.BUSY
+                self._runner_db.save_runner(self)
+                self._logger.info(f'Runner {self.id} changed its status to {self.status.value}')
 
+                # process all new jobs found in DB
                 for job in self.jobs:
                     job_result = self.run_job(job)
                     job_stdout = job_result.stdout
@@ -134,10 +135,9 @@ class Runner:
                     job_returncode = job_result.returncode
 
                 # Updates runner status in DB to "up" when all jobs finished
-                # TODO: uncomment after runner schema change
-                # self.status = RunnerStatus.UP
-                # self._runner_db.save_runner(self)
-                # self._logger.info(f'Runner {self.id} changed his status to {self.status.value}')
+                self.status = RunnerStatus.IDLE
+                self._runner_db.save_runner(self)
+                self._logger.info(f'Runner {self.id} changed its status to {self.status.value}')
                 start = time.time()
             else:
                 self._logger.info(f'Runner {self.id} is waiting for new jobs')
@@ -207,6 +207,20 @@ class RunnerDB:
         self.db_client.send_request('update', json.dumps(data))
         self._logger.info(f'Runner {runner.id} saved in DB')
 
+    def send_notification(self, runner):
+        """
+           Send a notification to the coordinator
+        """
+
+        data = {
+            'class': 'Runner',
+            'id': runner.id,
+            'attrs': {
+                'status': runner.status.value
+            },
+        }
+
+        self.db_client.send_request('')
 
 @click.command()
 @click.option('--version', count=True)

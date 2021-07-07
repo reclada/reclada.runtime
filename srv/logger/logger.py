@@ -3,7 +3,7 @@ import sys
 from logging.handlers import TimedRotatingFileHandler
 
 FORMATTER = logging.Formatter("%(asctime)s — %(funcName)s — %(levelname)s — %(message)s")
-CONSOLE_FORMATTER = logging.Formatter("[%(levelname)s]: %(message)s")
+CONSOLE_FORMATTER = logging.Formatter("[%(levelname)s]-%(asctime)s : %(message)s")
 
 def get_console_handler():
    """

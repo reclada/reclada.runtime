@@ -39,7 +39,7 @@ class PgMBClient(MBClient, Process):
 
         # create the Notification Manager
         # to handle notifications from different channels
-        # now we have only one channel
+        # For now we have only one channel
         self._pgc.listen(self._channels)
         nm = NotificationManager(self._pgc)
         nm.settimeout(10)
