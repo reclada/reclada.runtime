@@ -101,7 +101,7 @@ class Coordinator():
                 type_of_staging = type_of_staging.strip()
                 self._log.info(f"New jobs found for resource {job['attrs']['type']}")
                 # find in DB all runners for the specified platform with status DOWN
-                runners = self._db_runner.get_all_down(type_of_staging)
+                runners = self._db_runner.get_all_down_idle(type_of_staging)
                 # if no stages of the specified type were found then
                 # we need to create that platform
                 if not self._stages.get(type_of_staging, None):
@@ -211,7 +211,7 @@ class RunnerDB():
         self._db_connection = db_connection
         self._log = log
 
-    def get_all_down(self, type_staging):
+    def get_all_down_idle(self, type_staging):
         """
             This method selects runner objects from DB with status DOWN
         :param type_staging: defines the platform for which runners are looked for
@@ -219,7 +219,7 @@ class RunnerDB():
         """
         try:
             # forming json structure for searching runner object
-            select_json = { 'class': 'Runner', 'attrs': {'status': 'down', 'type': type_staging}}
+            select_json = { 'class': 'Runner', 'attrs': {'status': ['down','idle'], 'type': type_staging}}
             # sending request to DB to select runner objects from DB
             runners = self._db_connection.send_request("list", json.dumps(select_json))
         except Exception as ex:

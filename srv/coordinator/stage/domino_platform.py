@@ -10,15 +10,15 @@ class DominoPlatform(Stage):
     def is_stage_active(self, type_of_stage):
         pass
 
-    def create_runner(self, ref_to_stage, runner_id, db_type):
+    def create_runner(self, ref_to_stage, runner_id, db_type, hw_tier):
         domino = Domino()
         owner = os.getenv('DOMINO_PROJECT_OWNER')  # defines automatically
         project = os.getenv('DOMINO_PROJECT_TO_RUN')  # defines manually
         repo_path = os.getenv('RECLADA_REPO_PATH')  # defines manually
-        command = [f'{repo_path}/run_runner.sh', repo_path, runner_id]
+        command = [f'{repo_path}/run_runner.sh', repo_path, runner_id, hw_tier]
 
         domino.run(
-            owner, project, command, is_direct=False,
+            owner, project, command, hw_tier=hw_tier, is_direct=False,
             title=f'{project}:{runner_id}',
         )
 
@@ -54,11 +54,12 @@ class Domino:
         except requests.exceptions.RequestException as e:
             raise DominoException from e
 
-    def run(self, user, project, command, title='from api', commit='', is_direct=False):
+    def run(self, user, project, command, title='from api', commit='', hw_tier='small', is_direct=False):
         data = {
             'isDirect': is_direct,
             'command': command,
             'title': title,
+            'tier': hw_tier
         }
         if commit:
             data['commitId'] = commit
