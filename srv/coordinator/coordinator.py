@@ -70,13 +70,6 @@ class Coordinator():
             message = self._queue.get(block=True)
             if type(message) is int and int(message) == 0:
                 self._log.info("Awaiting for notification")
-                # The temporary fix for J&J demo
-                # It needs to be removed when we find out why
-                # notification doesn't go through
-
-                run_idle_down = self._db_runner.get_all_down_idle("K8S")
-
-                self.process_reclada_message(message)
             else:
                 self._log.info(f"A new notification was received.")
                 self.process_reclada_message(message)
@@ -116,11 +109,12 @@ class Coordinator():
                     self._log.debug(f"The new resource {type_of_staging} was created.")
                     # adding stage to the coordinator's dictionary
                     self._stages[type_of_staging] = Stage(type_of_staging, ref_stage, [])
-                    # if runners found in DB then add them to the dictionary
-                    if runners[0][0]:
-                        runners_found = [Runner(run["id"], 0, run["attrs"]["status"]) for run in runners[0][0]]
-                        self._stages[type_of_staging].runners.extend(runners_found)
-                        self._log.info(f"Found {len(runners_found)} runners")
+                # if runners found in DB then add them to the dictionary
+                if runners[0][0]:
+                    runners_found = [Runner(run["id"], 0, run["attrs"]["status"]) for run in runners[0][0]]
+                    self._stages[type_of_staging].runners.clear()
+                    self._stages[type_of_staging].runners.extend(runners_found)
+                    self._log.info(f"Found {len(runners_found)} runners")
 
                 # find the suitable runner for the job in the dictionary
                 runner = self.find_runner(type_of_staging)
@@ -225,12 +219,9 @@ class RunnerDB():
         """
         try:
             # forming json structure for searching runner that is not running now
-            select_json = { 'class': 'Runner', 'attrs': {'status': 'down', 'type': type_staging}}
+            select_json = { 'class': 'Runner', 'attrs': {'type': type_staging}}
             # sending request to DB to select runner objects from DB
             runners = self._db_connection.send_request("list", json.dumps(select_json))
-            # forming json structure for searching runner that is running but no processing any Jobs
-            select_json = {'class': 'Runner', 'attrs': {'status': 'idle', 'type': type_staging}}
-            runners[0][0][0] += self._db_connection.send_request("list", json.dumps(select_json))[0][0][0]
         except Exception as ex:
             self._log.error(format(ex))
             raise ex
