@@ -35,7 +35,10 @@ class Coordinator():
             This method starts processing messages from a message broker
         """
         # sets credentials to connect to MB
-        self._message_client.set_credentials("MB", None)
+        if self._message_client.set_credentials("MB", None):
+            self._log.error("Not enough information for Message Broker Client.")
+            return
+
         # sets the queue to exchange messages between
         # broker and coordinator
         self._message_client.set_queue(self._queue)
@@ -70,6 +73,9 @@ class Coordinator():
                 # The temporary fix for J&J demo
                 # It needs to be removed when we find out why
                 # notification doesn't go through
+
+                run_idle_down = self._db_runner.get_all_down_idle("K8S")
+
                 self.process_reclada_message(message)
             else:
                 self._log.info(f"A new notification was received.")
@@ -218,10 +224,13 @@ class RunnerDB():
         :return: the list of named tuple Runners
         """
         try:
-            # forming json structure for searching runner object
-            select_json = { 'class': 'Runner', 'attrs': {'status': ['down','idle'], 'type': type_staging}}
+            # forming json structure for searching runner that is not running now
+            select_json = { 'class': 'Runner', 'attrs': {'status': 'down', 'type': type_staging}}
             # sending request to DB to select runner objects from DB
             runners = self._db_connection.send_request("list", json.dumps(select_json))
+            # forming json structure for searching runner that is running but no processing any Jobs
+            select_json = {'class': 'Runner', 'attrs': {'status': 'idle', 'type': type_staging}}
+            runners[0][0][0] += self._db_connection.send_request("list", json.dumps(select_json))[0][0][0]
         except Exception as ex:
             self._log.error(format(ex))
             raise ex

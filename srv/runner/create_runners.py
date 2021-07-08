@@ -42,6 +42,23 @@ def main():
         cursor.callproc('reclada_object.create', [json.dumps(data)])
         connection.commit()
 
+    for _ in range(5):
+        cursor = connection.cursor()
+
+        data = {
+            'class': 'Runner',
+            'attrs': {
+                'command': '',
+                'status': 'idle',
+                'type': args.type,
+                'task': str(uuid.uuid4()),
+                'environment': str(uuid.uuid4()),
+            },
+        }
+        cursor.callproc('reclada_object.create', [json.dumps(data)])
+        connection.commit()
+
+
     connection.close()
 
 

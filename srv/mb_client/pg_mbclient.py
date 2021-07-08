@@ -69,10 +69,21 @@ class PgMBClient(MBClient, Process):
         res = Resource()
         res = res.get(type, json_file)
         self._host = res.host
+        if self._host is None:
+            return 1
         self._database = res.database
+        if self._database is None:
+            return 1
         self._user = res.user
+        if self._user is None:
+            return 1
         self._password = res.password
+        if self._password is None:
+            return 1
         self._channels = res.channel
+        if self._channels is None:
+            return 1
+
 
     def set_queue(self, queue):
         """
