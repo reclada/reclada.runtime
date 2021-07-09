@@ -14,13 +14,14 @@ from srv.logger import logger
 from srv.s3.s3 import S3
 from srv.runner._version import __version__
 
+
 class RunnerError(Exception):
     pass
 
 
 class RunnerStatus(Enum):
     UP = 'up'
-    BUSY = 'busy'
+    IDLE = 'idle'
     DOWN = 'down'
 
 
@@ -43,7 +44,7 @@ class Runner:
         self._jobs = []
 
     def __repr__(self):
-        return f'Runner id={self.id} with status={self.status} having {len(self.jobs)} jobs'
+        return f'Runner {self.id} with status {self.status} having {len(self.jobs)} jobs'
 
     @property
     def status(self):
@@ -81,18 +82,24 @@ class Runner:
 
         """
         self._jobs = self._job_db.get_runner_jobs(self.id)
-        self._logger.info(f'Runner {self.id} received {len(self._jobs)} jobs')
+        if len(self._jobs) > 1:
+            self._logger.info(f'Runner {self.id} received {len(self._jobs)} jobs')
+        elif len(self._jobs) == 1:
+            self._logger.info(f'Runner {self.id} received {len(self._jobs)} job')
+        else:
+            self._logger.info(f'No jobs for runner {self.id}')
 
     def run_job(self, job):
         """
         Runs job
 
         """
-        # Updates job status in DB to "running"
+        # updates job status in DB to "running"
         job.status = JobStatus.RUNNING
         self._job_db.save_job(job)
         self._logger.info(f'Runner {self.id} changed job {job.id} status to {job.status.value}')
 
+        # runs job
         # TODO: resolve all input parameters
         s3_uri = job.input_parameters[0]['uri']
         command = job.command.split()
@@ -100,7 +107,7 @@ class Runner:
                           f'and parameters {job.input_parameters}')
         job_result = subprocess.run(command + [s3_uri, job.id], cwd=os.getenv('RECLADA_REPO_PATH'))
 
-        # Updates job status in DB depending on the job return code
+        # updates job status in DB depending on the job return code
         if job_result.returncode == 0:
             job.status = JobStatus.SUCCESS
         else:
@@ -121,23 +128,22 @@ class Runner:
             self.get_new_jobs()
 
             if self.jobs:
-                # Updates runner status in DB to "busy" before running jobs
-                # TODO: change schema for runner adding status busy
-                # self.status = RunnerStatus.BUSY
-                # self._runner_db.save_runner(self)
-                # self._logger.info(f'Runner {self.id} changed his status to {self.status.value}')
+                # updates runner status in DB to "up" when all jobs finished
+                self.status = RunnerStatus.UP
+                self._runner_db.save_runner(self)
+                self._logger.info(f'Runner {self.id} changed its status to {self.status.value}')
 
+                # process all new jobs found in DB
                 for job in self.jobs:
                     job_result = self.run_job(job)
                     job_stdout = job_result.stdout
                     job_stderr = job_result.stderr
                     job_returncode = job_result.returncode
 
-                # Updates runner status in DB to "up" when all jobs finished
-                # TODO: uncomment after runner schema change
-                # self.status = RunnerStatus.UP
-                # self._runner_db.save_runner(self)
-                # self._logger.info(f'Runner {self.id} changed his status to {self.status.value}')
+                # updates runner status in DB to "idle" when all jobs finished
+                self.status = RunnerStatus.IDLE
+                self._runner_db.save_runner(self)
+                self._logger.info(f'Runner {self.id} changed its status to {self.status.value}')
                 start = time.time()
             else:
                 self._logger.info(f'Runner {self.id} is waiting for new jobs')
@@ -145,6 +151,8 @@ class Runner:
 
             stop = time.time()
             if stop - start > 300:
+                # updates runner status in DB to "down" and
+                # shutdowns runner if there was no jobs for 5 mins
                 self.status = RunnerStatus.DOWN
                 self._runner_db.save_runner(self)
                 self._logger.info(f'Runner {self.id} is shutting down due to no jobs')
@@ -207,6 +215,21 @@ class RunnerDB:
         self.db_client.send_request('update', json.dumps(data))
         self._logger.info(f'Runner {runner.id} saved in DB')
 
+    def send_notification(self, runner):
+        """
+           Send a notification to the coordinator
+        """
+
+        data = {
+            'class': 'Runner',
+            'id': runner.id,
+            'attrs': {
+                'status': runner.status.value
+            },
+        }
+
+        self.db_client.send_request('')
+
 
 @click.command()
 @click.option('--version', count=True)
@@ -214,11 +237,10 @@ class RunnerDB:
 @click.option('--db-client', default='POSTGRESQL', type=str)
 @click.option('--verbose', count=True)
 def main(version, runner_id, db_client, verbose):
-
     # if parameter version is specified then
     # the version number is supposed to be printed
     if version:
-        print(f"Runner version {__version__}.")
+        print(f'Runner version {__version__}.')
         return
 
     # set the logging level based on the specified parameter --verbose
@@ -243,7 +265,7 @@ def main(version, runner_id, db_client, verbose):
     # to copy files to/from S3 bucket
     s3 = S3
 
-    runner_logger.info(f"Runner v{__version__} started.")
+    runner_logger.info(f'Runner v{__version__} started.')
 
     # reads Runner from DB by runner_id
     runner = runner_db.get_runner(runner_id, runner_db, job_db, s3, runner_logger)
