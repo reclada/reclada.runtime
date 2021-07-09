@@ -4,7 +4,7 @@ from srv.coordinator._version import __version__
 from srv.coordinator.stage.stage_factory import stage
 from srv.mb_client.mbclient_factory import mbclient
 from srv.db_client.dbclient_factory import dbclient
-from collections import namedtuple
+from collections import namedtuple,Counter
 from enum import Enum
 import json
 import click
@@ -15,9 +15,9 @@ Stage = namedtuple("Stage", "type reference runners")
 Runner = namedtuple("Runner", "id number_of_jobs state")
 
 class RunnerState(Enum):
-    NEW = 1
-    DOWN = 2
-    IDLE = 3
+    BUSY = "up"
+    DOWN = "down"
+    IDLE = "idle"
 
 class Coordinator():
 
@@ -44,13 +44,6 @@ class Coordinator():
         self._message_client.set_queue(self._queue)
         # sets credentials to DB's connection
         self._db_client.set_credentials("DB", None)
-
-        # setting connection to DB
-        try:
-            self._db_client.connect()
-        except Exception as ex:
-            self._log.error(format(ex))
-            raise ex
 
         self._db_runner = RunnerDB(self._db_client, self._log)
         self._db_jobs = JobDB(self._db_client, self._log)
@@ -82,6 +75,9 @@ class Coordinator():
             This method processing all new jobs found in DB
             :param message: message that was received from PostgreSQL
         """
+
+        # Here we need to empty the Queue of messages
+        self._queue.empty()
 
         # start the loop for job processing
         while True:
@@ -141,13 +137,10 @@ class Coordinator():
                         self._log.debug(f"The status for runner {runner.id} was changed to 'up'")
                     else:
                         self._log.debug(f"No idle or down runners were found.")
-                        runner = self.find_runner_minimum_jobs(type_of_staging)
+                        jobs_pending = self._db_jobs.get_pending(type_of_staging)
+                        runner = self.find_runner_minimum_jobs(type_of_staging, jobs_pending)
                         self._log.debug(f"Trying to find runners with minimum jobs")
-                        if runner:
-                            jobs_number = runner.number_of_jobs + 1
-                            runner = runner._replace(number_of_jobs = jobs_number)
-                            self.update_runner(type_of_staging, runner)
-                            self._log.info(f"The job with id {job['id']} was assigned to runner with id {runner.id}")
+
 
                 # here we need to update reclada jobs with the runner id if runner exists
                 if runner:
@@ -169,23 +162,27 @@ class Coordinator():
             # finds the idle or newly created runner
             # on the specified stage if it is found then return its id
             for runner in self._stages[type_of_staging].runners:
-                if runner.state == RunnerState.IDLE or runner.state == RunnerState.NEW:
+                if runner.state == RunnerState.IDLE.value or runner.state == RunnerState.DOWN.value:
                     return runner
         # if there are no idle or new runners then returns None
         return None
 
-    def find_runner_minimum_jobs(self, type_of_staging):
+    def find_runner_minimum_jobs(self, type_of_staging, jobs_pending):
         """
             This method return the runner with the minimum jobs assigned to it
         :param type_of_staging:
         :return: runner
         """
-        # check if we have runners associated with the specified stage
-        runner = None
-        if self._stages[type_of_staging].runners:
-            # find runner with the minimum number of jobs assigned to it
-           runner = min(self._stages[type_of_staging].runners, key=lambda x : x.number_of_jobs)
-        return runner
+
+        # from jobs found in DB determine runner id for
+        # the minimum jobs were assigned
+        if jobs_pending[0][0]:
+            jobs_for_runner = [job["attrs"]["runner"] for job in jobs_pending[0][0]]
+            jobs_count = Counter(jobs_for_runner)
+            jobs_count = jobs_count.most_common()
+            runner = [ runner for runner in self._stages[type_of_staging].runners if runner.id == jobs_count[-1][0]]
+            return runner[0]
+
 
     def update_runner(self, type_of_staging, runner):
         """
@@ -264,6 +261,24 @@ class JobDB():
             raise ex
 
         return jobs_new
+
+
+    def get_pending(self, type_of_staging):
+        """
+            This method selects all pending jobs from DB
+        :return: the list of Job objects
+        """
+        try:
+            # creating json structure for a query
+            jobs_pending = {"class": "Job", "attrs": {"status": "pending", "type": type_of_staging }}
+            # sending request to DB to select all new jobs
+            jobs_pending = self._db_connection.send_request("list", json.dumps(jobs_pending))
+        except Exception as ex:
+            self._log.error(format(ex))
+            raise ex
+
+        return jobs_pending
+
 
     def save(self, job):
         """
