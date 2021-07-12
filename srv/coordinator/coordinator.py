@@ -125,10 +125,6 @@ class Coordinator():
                         self._log.info(f"Runner with id {runner.id} was created.")
                         # preparing information for updating runner in the stage dictionary
                         runner = runner._replace(state="up")
-                        jobs_number = runner.number_of_jobs + 1
-                        runner = runner._replace(number_of_jobs=jobs_number)
-                        # updating runner in the stage dictionary
-                        self.update_runner(type_of_staging, runner)
                         # updating the status for the runner to save it to DB
                         runner_to_save = [run for run in runners[0][0] if run["id"] == runner.id]
                         runner_to_save[0]["attrs"]["status"] = "up"
@@ -140,7 +136,12 @@ class Coordinator():
                         jobs_pending = self._db_jobs.get_pending(type_of_staging)
                         runner = self.find_runner_minimum_jobs(type_of_staging, jobs_pending)
                         self._log.debug(f"Trying to find runners with minimum jobs")
-
+                else:
+                    runner = runner._replace(state="up")
+                    runner_to_save = [run for run in runners[0][0] if run["id"] == runner.id]
+                    runner_to_save[0]["attrs"]["status"] = "up"
+                    self._db_runner.save(runner_to_save)
+                    self._log.debug(f"The status for runner {runner.id} was changed to 'up'")
 
                 # here we need to update reclada jobs with the runner id if runner exists
                 if runner:
@@ -152,6 +153,9 @@ class Coordinator():
                     job["attrs"]["status"] = "failed"
                     self._db_jobs.save(job)
                     self._log.info(f"No runners were found for resource {type_of_staging}")
+
+        # here we need to clean the queue since lambda functions triggers for every file
+        self._queue.empty()
 
     def find_runner(self, type_of_staging):
         """
