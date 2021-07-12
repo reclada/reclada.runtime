@@ -10,7 +10,7 @@ class DominoPlatform(Stage):
     def is_stage_active(self, type_of_stage):
         pass
 
-    def create_runner(self, ref_to_stage, runner_id, db_type):
+    def create_runner(self, ref_to_stage, runner_id, db_type, hw_tier=None):
         domino = Domino()
         owner = os.getenv('DOMINO_PROJECT_OWNER')  # defines automatically
         project = os.getenv('DOMINO_PROJECT_TO_RUN')  # defines manually
@@ -18,7 +18,7 @@ class DominoPlatform(Stage):
         command = [f'{repo_path}/run_runner.sh', repo_path, runner_id]
 
         domino.run(
-            owner, project, command, is_direct=False,
+            owner, project, command, hw_tier=hw_tier, is_direct=False,
             title=f'{project}:{runner_id}',
         )
 
@@ -54,12 +54,17 @@ class Domino:
         except requests.exceptions.RequestException as e:
             raise DominoException from e
 
-    def run(self, user, project, command, title='from api', commit='', is_direct=False):
+    def run(self, user, project, command, title='from api', commit='', hw_tier=None, is_direct=False):
         data = {
             'isDirect': is_direct,
             'command': command,
             'title': title,
         }
+
+        # if the hardware tier is specified then we need to add it to the body of the request
+        if hw_tier:
+            data["tier"] = hw_tier
+
         if commit:
             data['commitId'] = commit
         return self._request(f'projects/{user}/{project}/runs', 'POST', json=data).json()

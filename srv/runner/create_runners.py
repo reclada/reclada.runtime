@@ -33,7 +33,7 @@ def main():
             'class': 'Runner',
             'attrs': {
                 'command': '',
-                'status': 'down',
+                'status': 'idle',
                 'type': args.type,
                 'task': str(uuid.uuid4()),
                 'environment': str(uuid.uuid4()),
@@ -41,7 +41,6 @@ def main():
         }
         cursor.callproc('reclada_object.create', [json.dumps(data)])
         connection.commit()
-
     connection.close()
 
 
