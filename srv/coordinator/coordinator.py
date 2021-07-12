@@ -76,9 +76,6 @@ class Coordinator():
             :param message: message that was received from PostgreSQL
         """
 
-        # Here we need to empty the Queue of messages
-        self._queue.empty()
-
         # start the loop for job processing
         while True:
             # read new jobs from the database
@@ -87,6 +84,12 @@ class Coordinator():
             # if no jobs were found then stop the loop
             if not self._jobs_to_process[0][0]:
                 self._log.info(f"No new jobs found in DB")
+                # here we need to empty the Queue with the messages
+                # since the multiple entries in the queue might be due
+                # to the fact that lambda function triggers on every file added
+                # to the S3 bucket.
+                while(not self._queue.empty()):
+                    self._queue.get_nowait()
                 break
 
             # process found new jobs
@@ -123,13 +126,8 @@ class Coordinator():
                         # create the runner of the platform
                         self._stage.create_runner(type_of_staging, runner.id, self._database_type)
                         self._log.info(f"Runner with id {runner.id} was created.")
-                        # preparing information for updating runner in the stage dictionary
-                        runner = runner._replace(state="up")
                         # updating the status for the runner to save it to DB
-                        runner_to_save = [run for run in runners[0][0] if run["id"] == runner.id]
-                        runner_to_save[0]["attrs"]["status"] = "up"
-                        # saving the new state of runner in DB
-                        self._db_runner.save(runner_to_save)
+                        self.update_runner_status(runners, runner)
                         self._log.debug(f"The status for runner {runner.id} was changed to 'up'")
                     else:
                         self._log.debug(f"No idle or down runners were found.")
@@ -137,10 +135,7 @@ class Coordinator():
                         runner = self.find_runner_minimum_jobs(type_of_staging, jobs_pending)
                         self._log.debug(f"Trying to find runners with minimum jobs")
                 else:
-                    runner = runner._replace(state="up")
-                    runner_to_save = [run for run in runners[0][0] if run["id"] == runner.id]
-                    runner_to_save[0]["attrs"]["status"] = "up"
-                    self._db_runner.save(runner_to_save)
+                    self.update_runner_status(runners, runner)
                     self._log.debug(f"The status for runner {runner.id} was changed to 'up'")
 
                 # here we need to update reclada jobs with the runner id if runner exists
@@ -170,6 +165,11 @@ class Coordinator():
                     return runner
         # if there are no idle or new runners then returns None
         return None
+
+    def update_runner_status(self, runners, runner):
+        runner_to_save = [run for run in runners[0][0] if run["id"] == runner.id]
+        runner_to_save[0]["attrs"]["status"] = "up"
+        self._db_runner.save(runner_to_save)
 
     def find_runner_minimum_jobs(self, type_of_staging, jobs_pending):
         """
