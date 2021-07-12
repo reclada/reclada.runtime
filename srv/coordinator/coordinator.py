@@ -149,9 +149,6 @@ class Coordinator():
                     self._db_jobs.save(job)
                     self._log.info(f"No runners were found for resource {type_of_staging}")
 
-        # here we need to clean the queue since lambda functions triggers for every file
-        self._queue.empty()
-
     def find_runner(self, type_of_staging):
         """
             This method returns the first idle runner and if there is no such runner it returns None
@@ -167,6 +164,10 @@ class Coordinator():
         return None
 
     def update_runner_status(self, runners, runner):
+        """
+            This method saves the status of the runner in DB and changes the status of the runner
+            to "up"
+        """
         runner_to_save = [run for run in runners[0][0] if run["id"] == runner.id]
         runner_to_save[0]["attrs"]["status"] = "up"
         self._db_runner.save(runner_to_save)
