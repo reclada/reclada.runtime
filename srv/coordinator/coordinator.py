@@ -4,7 +4,7 @@ from srv.coordinator._version import __version__
 from srv.coordinator.stage.stage_factory import stage
 from srv.mb_client.mbclient_factory import mbclient
 from srv.db_client.dbclient_factory import dbclient
-from collections import namedtuple,Counter
+from collections import namedtuple, Counter
 from enum import Enum
 import json
 import click
@@ -259,9 +259,7 @@ class JobDB():
         except Exception as ex:
             self._log.error(format(ex))
             raise ex
-
         return jobs_new
-
 
     def get_pending(self, type_of_staging):
         """
@@ -276,9 +274,7 @@ class JobDB():
         except Exception as ex:
             self._log.error(format(ex))
             raise ex
-
         return jobs_pending
-
 
     def save(self, job):
         """
