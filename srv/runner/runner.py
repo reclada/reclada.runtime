@@ -102,6 +102,7 @@ class Runner:
         # runs job
         # TODO: resolve all input parameters
         s3_uri = job.input_parameters[0]['uri']
+        file_id = job.input_parameters[1]['dataSourceId']
         command = job.command.split()
         self._logger.info(f'Runner {self.id} is launching job {job.id} with command {job.command} '
                           f'and parameters {job.input_parameters}')
@@ -109,7 +110,7 @@ class Runner:
         # Here we need to check if CUSTOM_TASK environment is defined
         # if yes then we need to add extra parameter for run_pipeline.sh
         custom_task = os.getenv('CUSTOM_TASK', None)
-        params = [s3_uri, job.id]
+        params = [s3_uri, file_id, job.id]
         if custom_task:
             params.append(custom_task)
 
