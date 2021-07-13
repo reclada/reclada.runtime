@@ -117,7 +117,7 @@ class Coordinator():
 
                 # find the suitable runner for the job in the dictionary
                 runner = self.find_runner(type_of_staging)
-                # if no idle runners were found then find the runner with the minimum jobs
+                # if no idle runners were found then find the runner with the status down
                 if not runner:
                     runners_down = [runner for runner in self._stages[type_of_staging].runners if runner.state == "down"]
                     if runners_down:
@@ -158,7 +158,7 @@ class Coordinator():
             # finds the idle or newly created runner
             # on the specified stage if it is found then return its id
             for runner in self._stages[type_of_staging].runners:
-                if runner.state == RunnerState.IDLE.value or runner.state == RunnerState.DOWN.value:
+                if runner.state == RunnerState.IDLE.value:
                     return runner
         # if there are no idle or new runners then returns None
         return None
