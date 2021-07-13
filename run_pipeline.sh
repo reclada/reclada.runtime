@@ -1,11 +1,11 @@
 #!/bin/bash
 
-_S3_FILE_URI="$1"
+export _S3_FILE_URI="$1"
 _FILE_ID="$2"
 _JOB_ID="$3"
 _CUSTOM_TASK="$4"
 _INPUT_DIR="/mnt/input/${_JOB_ID}"
-_OUTPUT_DIR="/mnt/output/${_JOB_ID}"
+export _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
 
 export PYTHONPATH="${PYTHONPATH}:${BADGERDOC_REPO_PATH}"
 export PYTHONPATH="${PYTHONPATH}:${SCINLP_REPO_PATH}"
