@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 _S3_FILE_URI="$1"
 _FILE_ID="$2"
@@ -25,7 +25,7 @@ cat "${_OUTPUT_DIR}/nlp_output.csv" | psql ${DB_URI_QUOTED} -c "\COPY reclada.st
 
 aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_JOB_ID}" --recursive
 
-# On some platform such as DOMINO we need to add an extra step in pipeline.
-# The extra script supplied as 4th parameter and if it exists then
+# On some platform such as DOMINO we need to add an extra step in the pipeline.
+# The extra step supplied as 4th parameter and if it exists then
 # we need to run it. If it doesn't then we skip this step
 [ ! -z "$_CUSTOM_TASK" ] && source "$_CUSTOM_TASK"
