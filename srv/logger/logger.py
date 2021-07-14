@@ -10,7 +10,6 @@ def get_console_handler():
        This function creates the logging handler for console output
    """
    # setting the output stream
-#   console_handler = logging.StreamHandler(sys.stdout)
    console_handler = MConsoleHandler()
    # setting the format of a logging message
    console_handler.setFormatter(CONSOLE_FORMATTER)
@@ -32,16 +31,25 @@ class MConsoleHandler(logging.StreamHandler):
     special_code = '[!n]'
 
     def emit(self, record) -> None:
-
+        """
+            This function analyzes the message and
+            if the special symbol is specified in the message
+            then the function insert some special control symbols
+        """
+        # find the special symbol in the message
         if self.special_code in record.msg:
+            # remove the special symbol from the message
             record.msg = record.msg.replace( self.special_code, '' )
+            # set the control symbol of clearing the last line in cosole
+            # output
             self.terminator = '\r'
         else:
+            # if there is no special symbol in the message
+            # then we set control symbol to end the line and
+            # start output on the new line
             self.terminator = '\n'
 
         return super().emit(record)
-
-
 
 
 def get_file_handler(file_name):
