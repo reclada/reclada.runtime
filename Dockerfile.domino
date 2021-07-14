@@ -67,3 +67,4 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH="${PYTHONPATH}:/table-extractor"
 
 RUN pip install -r https://raw.githubusercontent.com/reclada/reclada.runtime/main/srv/requirements.txt
+RUN pip install pandas

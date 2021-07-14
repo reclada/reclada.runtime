@@ -34,21 +34,23 @@ TBD
 | SCINLP_REPO_PATH | Path where reclada SciNLP repo is mounted plus directory to SciNLP executable file e.g. `/repos/reclada_SciNLP/src/srv/lite` |
 | BADGERDOC_REPO_PATH | Path where badgerdoc repo is mounted e.g. `/repos/badgerdoc_badgerdoc` |
 
-8. In the project create a launcher to create runners in DB. For the command to run use:
+8. In project settings in `Results` tab select `To isolated branches` option.
+
+9. In the project create a launcher to create runners in DB. For the command to run use:
 ```bash
 <reclada_runtime_repo_mount_path>/srv/runner/create_runners.py --type=DOMINO
 ```
 
-9. In the project create a launcher for the coordinator. For the command to run use:
+10. In the project create a launcher for the coordinator. For the command to run use:
 ```bash
 <reclada_runtime_repo_mount_path>/run_coordinator.sh <reclada_runtime_repo_mount_path>
 ```
 
-10. In the project create a launcher to manually assign jobs to the runner. For the command to run use:
+11. In the project create a launcher to manually assign jobs to the runner. For the command to run use:
 ```bash
 <reclada_runtime_repo_mount_path>/srv/runner/assign_jobs_to_runner.py --type=DOMINO --runner-id=<runner_id>
 ```
-11. In the project create a launcher to manually launch badgerdoc runner. For the command to run use:
+12. In the project create a launcher to manually launch badgerdoc runner. For the command to run use:
 ```bash
 <reclada_runtime_repo_mount_path>/run_runner.sh <reclada_runtime_repo_mount_path> <runner_id>
 ```
