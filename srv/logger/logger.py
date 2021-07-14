@@ -10,13 +10,38 @@ def get_console_handler():
        This function creates the logging handler for console output
    """
    # setting the output stream
-   console_handler = logging.StreamHandler(sys.stdout)
+#   console_handler = logging.StreamHandler(sys.stdout)
+   console_handler = MConsoleHandler()
    # setting the format of a logging message
    console_handler.setFormatter(CONSOLE_FORMATTER)
    # setting the type of the messages that gets logged
    # For console output only error messages appeares in the output
    console_handler.setLevel(logging.INFO)
    return console_handler
+
+
+class MConsoleHandler(logging.StreamHandler):
+    """
+          Handler that controls the writing of the newline character
+    """
+    def __init__(self):
+          logging.StreamHandler.__init__(self, sys.stdout)
+
+    # if this symbol is included in the message then
+    # the message would be printed out on the same line
+    special_code = '[!n]'
+
+    def emit(self, record) -> None:
+
+        if self.special_code in record.msg:
+            record.msg = record.msg.replace( self.special_code, '' )
+            self.terminator = '\r'
+        else:
+            self.terminator = '\n'
+
+        return super().emit(record)
+
+
 
 
 def get_file_handler(file_name):
