@@ -34,7 +34,7 @@ def main():
             'class': 'Runner',
             'attrs': {
                 'command': '',
-                'status': 'idle',
+                'status': 'down',
                 'type': args.type,
                 'task': str(uuid.uuid4()),
                 'environment': str(uuid.uuid4()),
