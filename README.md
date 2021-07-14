@@ -38,8 +38,9 @@ TBD
 
 9. In the project create a launcher to create runners in DB. For the command to run use:
 ```bash
-<reclada_runtime_repo_mount_path>/srv/runner/create_runners.py --type=DOMINO
+<reclada_runtime_repo_mount_path>/srv/runner/create_runners.py --type=DOMINO --number=5
 ```
+Number parameter is optional (default 5).
 
 10. In the project create a launcher for the coordinator. For the command to run use:
 ```bash

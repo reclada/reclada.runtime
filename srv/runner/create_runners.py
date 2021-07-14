@@ -10,6 +10,7 @@ import psycopg2
 def init_argparse():
     parser = argparse.ArgumentParser()
     parser.add_argument('--type')
+    parser.add_argument('--number', default=5)
     return parser
 
 
@@ -26,7 +27,7 @@ def main():
         password=credentials.password,
     )
 
-    for _ in range(5):
+    for _ in range(int(args.number)):
         cursor = connection.cursor()
 
         data = {
