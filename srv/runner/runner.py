@@ -86,8 +86,6 @@ class Runner:
             self._logger.info(f'Runner {self.id} received {len(self._jobs)} jobs')
         elif len(self._jobs) == 1:
             self._logger.info(f'Runner {self.id} received {len(self._jobs)} job')
-        else:
-            self._logger.info(f'No jobs for runner {self.id}')
 
     def run_job(self, job):
         """
@@ -155,7 +153,7 @@ class Runner:
                 self._logger.info(f'Runner {self.id} changed its status to {self.status.value}')
                 start = time.time()
             else:
-                self._logger.info(f'Runner {self.id} is waiting for new jobs')
+                self._logger.info(f'Runner {self.id} is waiting for new jobs...[!n]')
                 time.sleep(10)
 
             stop = time.time()
