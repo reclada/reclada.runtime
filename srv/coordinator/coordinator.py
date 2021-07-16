@@ -62,7 +62,7 @@ class Coordinator():
         while True:
             message = self._queue.get(block=True)
             if type(message) is int and int(message) == 0:
-                self._log.info("Awaiting for notification..[!n]")
+                self._log.info("Awaiting for notification...[!n]")
             else:
                 self._log.info(f"A new notification was received.")
                 self.process_reclada_message(message)
