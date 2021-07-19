@@ -229,7 +229,7 @@ class Coordinator():
                 last_update = runner.get("attrs").get("last_update", None)
                 if last_update and runner["attrs"]["status"] == RunnerState.IDLE.value:
                     # converting last_update datetime to time format
-                    last_time = time.strptime(runner["attrs"]["status"], "%Y/%m/%d %H:%M:%S")
+                    last_time = time.strptime(last_update, "%Y/%m/%d %H:%M:%S")
                     last_time = time.mktime(last_time)
 
                     # if the difference between last_update time and current time more than 5 minutes
