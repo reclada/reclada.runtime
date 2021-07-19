@@ -78,7 +78,7 @@ class JobDB:
             job_logger=self._logger,
         )
 
-    def get_runner_jobs(self, runner_id):
+    def get_jobs(self, runner_id, status):
         """
         Gets new jobs from DB that are assigned to runner and returns list of Job instances
 
@@ -88,7 +88,7 @@ class JobDB:
             'class': 'Job',
             'attrs': {
                 'runner': runner_id,
-                'status': JobStatus.PENDING.value,
+                'status': status #JobStatus.PENDING.value,
             },
         }
         self._logger.info(f'Receiving jobs')
