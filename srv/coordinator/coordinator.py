@@ -79,9 +79,6 @@ class Coordinator():
 
         self._message_client.join()
 
-
-# my_time = time.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
-
     def process_reclada_message(self, reclada_message):
         """
             This method processing all new jobs found in DB
@@ -239,6 +236,7 @@ class Coordinator():
                     # then we need to changes status of the runner to Down
                     if runner["attrs"]["status"] == RunnerState.IDLE.value and time.time() - last_time > 300:
                         runner["attrs"]["status"] = RunnerState.DOWN.value
+                        self._log.info(f"The state of runner {runner['id']} was restored to DOWN.")
                         self._db_runner.save(runner)
 
 

@@ -184,6 +184,7 @@ class Runner:
         if running_jobs:
             for running_job in running_jobs:
                 running_job["attrs"]["status"] = JobStatus.PENDING.value
+                self._logger.info(f"The status of job {running_job['id']} was restored to PENDING.")
                 self._job_db.save_job(running_job)
 
 
