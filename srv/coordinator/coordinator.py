@@ -1,15 +1,17 @@
 #!/usr/bin/python3
 from multiprocessing import Queue
-from srv.coordinator._version import __version__
-from srv.coordinator.stage.stage_factory import stage
-from srv.mb_client.mbclient_factory import mbclient
-from srv.db_client.dbclient_factory import dbclient
 from collections import namedtuple, Counter
 from enum import Enum
 import json
 import click
-import srv.logger.logger as log
+import time
 import logging
+
+from srv.coordinator._version import __version__
+from srv.coordinator.stage.stage_factory import stage
+from srv.mb_client.mbclient_factory import mbclient
+from srv.db_client.dbclient_factory import dbclient
+import srv.logger.logger as log
 
 Stage = namedtuple("Stage", "type reference runners")
 Runner = namedtuple("Runner", "id number_of_jobs state")
@@ -29,6 +31,7 @@ class Coordinator():
         self._queue = Queue()
         self._stages = {}
         self._database_type = database_client
+        self._block_awaiting = False
 
     def start(self):
         """
@@ -62,19 +65,31 @@ class Coordinator():
         while True:
             message = self._queue.get(block=True)
             if type(message) is int and int(message) == 0:
-                self._log.info("Awaiting for notification")
+                # we need to log this message only once
+                # so if the flag block_awaiting is not set to False
+                # then we log this message otherwise just skip it
+                if not self._block_awaiting:
+                    self._log.info("Awaiting for notifications...")
+                    self._block_awaiting = True
             else:
                 self._log.info(f"A new notification was received.")
+                # return the flag block_awaiting to the initial state
+                self._block_awaiting = False
                 self.process_reclada_message(message)
 
         self._message_client.join()
-
 
     def process_reclada_message(self, reclada_message):
         """
             This method processing all new jobs found in DB
             :param message: message that was received from PostgreSQL
         """
+
+        # get all runners in different statuses
+        # change statuses of runners with Idle state to
+        # Down if last_update happened more than 5
+        # minutes ago
+        self.pre_process_runners()
 
         # start the loop for job processing
         while True:
@@ -99,7 +114,7 @@ class Coordinator():
                 type_of_staging = type_of_staging.strip()
                 self._log.info(f"New jobs found for resource {job['attrs']['type']}")
                 # find in DB all runners for the specified platform with status DOWN
-                runners = self._db_runner.get_all_down_idle(type_of_staging)
+                runners = self._db_runner.get_all(type_of_staging)
                 # if no stages of the specified type were found then
                 # we need to create that platform
                 if not self._stages.get(type_of_staging, None):
@@ -188,7 +203,6 @@ class Coordinator():
             runner = [ runner for runner in self._stages[type_of_staging].runners if runner.id == jobs_count[-1][0]]
             return runner[0]
 
-
     def update_runner(self, type_of_staging, runner):
         """
             This method updates the list of runneres in the dictionary
@@ -204,6 +218,27 @@ class Coordinator():
         # updating the dictionary with the new Stage
         self._stages[type_of_staging] = stage
 
+    def pre_process_runners(self):
+        """
+            This method checks for runners in Idle state with last_update more
+            than 5 minutes ago and return status of this runner to down
+        """
+        runners = self._db_runner.get_all()
+        if runners[0][0]:
+            for runner in runners[0][0]:
+                last_update = runner.get("attrs").get("last_update", None)
+                if last_update and runner["attrs"]["status"] == RunnerState.IDLE.value:
+                    # converting last_update datetime to time format
+                    last_time = time.strptime(last_update, "%Y/%m/%d %H:%M:%S")
+                    last_time = time.mktime(last_time)
+
+                    # if the difference between last_update time and current time more than 5 minutes
+                    # then we need to changes status of the runner to Down
+                    if runner["attrs"]["status"] == RunnerState.IDLE.value and time.time() - last_time > 300:
+                        runner["attrs"]["status"] = RunnerState.DOWN.value
+                        self._log.info(f"The state of runner {runner['id']} was restored to DOWN.")
+                        self._db_runner.save([runner])
+
 
 class RunnerDB():
     """
@@ -213,7 +248,7 @@ class RunnerDB():
         self._db_connection = db_connection
         self._log = log
 
-    def get_all_down_idle(self, type_staging):
+    def get_all(self, type_staging=None):
         """
             This method selects runner objects from DB with status DOWN
         :param type_staging: defines the platform for which runners are looked for
@@ -221,7 +256,11 @@ class RunnerDB():
         """
         try:
             # forming json structure for searching runner that is not running now
-            select_json = { 'class': 'Runner', 'attrs': {'type': type_staging}}
+            if type_staging:
+                select_json = {'class': 'Runner', 'attrs': {'type': type_staging}}
+            else:
+                select_json = {'class': 'Runner'}
+
             # sending request to DB to select runner objects from DB
             runners = self._db_connection.send_request("list", json.dumps(select_json))
         except Exception as ex:

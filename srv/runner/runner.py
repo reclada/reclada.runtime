@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 from enum import Enum
+from datetime import datetime
 
 import click
 
@@ -66,7 +67,6 @@ class Runner:
             raise error
 
         self._status = new_status
-        self._logger.info(f'Runner {self.id} changed status to {self._status.value}')
 
     @property
     def jobs(self):
@@ -81,7 +81,7 @@ class Runner:
         Gets new jobs from DB
 
         """
-        self._jobs = self._job_db.get_runner_jobs(self.id)
+        self._jobs = self._job_db.get_jobs(self.id, JobStatus.PENDING.value)
         if len(self._jobs) > 1:
             self._logger.info(f'Runner {self.id} received {len(self._jobs)} jobs')
         elif len(self._jobs) == 1:
@@ -133,6 +133,11 @@ class Runner:
         """
         start = time.time()
 
+        # Before processing new jobs we need to check
+        # if there are jobs in Running state. If yes then
+        # we need to change there statuses to Pending
+        self.pre_process()
+
         while True:
             self.get_new_jobs()
 
@@ -156,6 +161,8 @@ class Runner:
                 start = time.time()
             else:
                 self._logger.info(f'Runner {self.id} is waiting for new jobs')
+                # update runner object in reclada DB with last_update
+                self._runner_db.save_runner(self)
                 time.sleep(10)
 
             stop = time.time()
@@ -167,6 +174,24 @@ class Runner:
                 self._logger.info(f'Runner {self.id} is shutting down due to no jobs')
                 self._logger.info(f'Runner {self.id} changed his status to {self.status.value}')
                 sys.exit(0)
+
+    def pre_process(self):
+        """
+            This method checks for unfinished jobs and returns their
+            statuses to PENDING
+        """
+        # Check if there are jobs in Running status
+        running_jobs = self._job_db.get_jobs(self.id, JobStatus.RUNNING.value)
+        self._logger.info(f"Checking for unfinished jobs.")
+        # if there are some jobs in Running state then
+        # we need to change the status of these jobs to Pending
+        if running_jobs:
+            for running_job in running_jobs:
+                running_job.status = JobStatus.PENDING
+                self._logger.info(f"The status of job {running_job.id} was restored to PENDING.")
+                self._job_db.save_job(running_job)
+        else:
+            self._logger.info(f"No unfinished jobs were found.")
 
 
 class RunnerDB:
@@ -219,6 +244,7 @@ class RunnerDB:
                 'type': runner.type,
                 'task': runner.task,
                 'environment': runner.environment,
+                'last_update': datetime.now().strftime("%Y/%m/%d %H:%M:%S")
             },
         }
         self.db_client.send_request('update', json.dumps(data))

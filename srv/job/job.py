@@ -78,7 +78,7 @@ class JobDB:
             job_logger=self._logger,
         )
 
-    def get_runner_jobs(self, runner_id):
+    def get_jobs(self, runner_id, status):
         """
         Gets new jobs from DB that are assigned to runner and returns list of Job instances
 
@@ -88,10 +88,9 @@ class JobDB:
             'class': 'Job',
             'attrs': {
                 'runner': runner_id,
-                'status': JobStatus.PENDING.value,
+                'status': status
             },
         }
-        self._logger.info(f'Receiving jobs')
         jobs = self.db_client.send_request('list', json.dumps(data))[0][0]
 
         if jobs is None:
@@ -120,10 +119,9 @@ class JobDB:
                 'type': job.type,
                 'task': job.task,
                 'command': job.command,
-                'input_parameters': job.input_parameters,
+                'inputParameters': job.input_parameters,
                 'status': job.status.value,
                 'runner': job.runner_id,
             },
         }
         self.db_client.send_request('update', json.dumps(data))
-        self._logger.info(f'Job {job.id} updated in DB')
