@@ -187,8 +187,8 @@ class Runner:
         # we need to change the status of these jobs to Pending
         if running_jobs:
             for running_job in running_jobs:
-                running_job["attrs"]["status"] = JobStatus.PENDING.value
-                self._logger.info(f"The status of job {running_job['id']} was restored to PENDING.")
+                running_job.status = JobStatus.PENDING
+                self._logger.info(f"The status of job {running_job.id} was restored to PENDING.")
                 self._job_db.save_job(running_job)
         else:
             self._logger.info(f"No unfinished jobs were found.")
