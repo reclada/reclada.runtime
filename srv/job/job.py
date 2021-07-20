@@ -88,7 +88,7 @@ class JobDB:
             'class': 'Job',
             'attrs': {
                 'runner': runner_id,
-                'status': status #JobStatus.PENDING.value,
+                'status': status
             },
         }
         self._logger.info(f'Receiving jobs')

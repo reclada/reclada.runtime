@@ -67,7 +67,6 @@ class Runner:
             raise error
 
         self._status = new_status
-        self._logger.info(f'Runner {self.id} changed status to {self._status.value}')
 
     @property
     def jobs(self):
@@ -179,6 +178,8 @@ class Runner:
     def pre_process(self):
         # Check if there are jobs in Running status
         running_jobs = self._job_db.get_jobs(self.id, JobStatus.RUNNING.value)
+        self._logger.info(f"Looking for unfinished jobs for {self.id} and status {JobStatus.RUNNING.value}")
+        print(f"Running jobs {running_jobs}")
         # if there are some jobs in Running state then
         # we need to change the status of these jobs to Pending
         if running_jobs:
