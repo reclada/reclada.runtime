@@ -91,7 +91,6 @@ class JobDB:
                 'status': status
             },
         }
-        self._logger.info(f'Receiving jobs')
         jobs = self.db_client.send_request('list', json.dumps(data))[0][0]
 
         if jobs is None:
@@ -120,10 +119,9 @@ class JobDB:
                 'type': job.type,
                 'task': job.task,
                 'command': job.command,
-                'input_parameters': job.input_parameters,
+                'inputParameters': job.input_parameters,
                 'status': job.status.value,
                 'runner': job.runner_id,
             },
         }
         self.db_client.send_request('update', json.dumps(data))
-        self._logger.info(f'Job {job.id} updated in DB')

@@ -176,10 +176,13 @@ class Runner:
                 sys.exit(0)
 
     def pre_process(self):
+        """
+            This method checks for unfinished jobs and returns their
+            statuses to PENDING
+        """
         # Check if there are jobs in Running status
         running_jobs = self._job_db.get_jobs(self.id, JobStatus.RUNNING.value)
-        self._logger.info(f"Looking for unfinished jobs for {self.id} and status {JobStatus.RUNNING.value}")
-        print(f"Running jobs {running_jobs}")
+        self._logger.info(f"Checking for unfinished jobs.")
         # if there are some jobs in Running state then
         # we need to change the status of these jobs to Pending
         if running_jobs:
@@ -187,6 +190,8 @@ class Runner:
                 running_job["attrs"]["status"] = JobStatus.PENDING.value
                 self._logger.info(f"The status of job {running_job['id']} was restored to PENDING.")
                 self._job_db.save_job(running_job)
+        else:
+            self._logger.info(f"No unfinished jobs were found.")
 
 
 class RunnerDB:
