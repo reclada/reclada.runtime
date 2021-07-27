@@ -25,7 +25,7 @@ printf "STEP 3 - End\n"
 
 printf "STEP 4 - Begin - Copying the results of badgerdoc's work to the S3 bucket\n"
 aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_JOB_ID}" --recursive
-printf "STEP 4 - End"
+printf "STEP 4 - End\n"
 
 printf "STEP 5 - Begin - Starting bd2reclada\n"
 python3 -m bd2reclada "${_OUTPUT_DIR}/${S3_FILE_NAME}/document.json" "${_OUTPUT_DIR}/output.csv" "${_FILE_ID}"
@@ -50,4 +50,9 @@ printf "STEP 9 - End\n"
 # On some platform such as DOMINO we need to add an extra step in the pipeline.
 # The extra step supplied as 4th parameter and if it exists then
 # we need to run it. If it doesn't then we skip this step
-[ ! -z "$_CUSTOM_TASK" ] && printf "STEP 10 - Begin\n" && source "$_CUSTOM_TASK" && printf "STEP 10 - End\n"
+if [[ -v _CUSTOM_TASK ]]
+then
+  printf "STEP 10 - Begin - Custom task\n"
+  source "$_CUSTOM_TASK"
+  printf "STEP 10 - End\n"
+fi
