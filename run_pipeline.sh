@@ -3,7 +3,7 @@
 function error_check(){
   if [ $? -ne 0 ]
   then
-    printf $1
+    printf "$1"
     exit 1
   fi
 }
@@ -12,7 +12,8 @@ function error_check(){
 export _S3_FILE_URI="$1"
 _FILE_ID="$2"
 _JOB_ID="$3"
-_CUSTOM_TASK="$4"
+_S3_OUTPUT_DIR="$4"
+_CUSTOM_TASK="$5"
 _INPUT_DIR="/mnt/input/${_JOB_ID}"
 export _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
 
@@ -35,7 +36,7 @@ error_check "ERROR happened during running badgerdoc\n"
 printf "STEP 3 - End\n"
 
 printf "STEP 4 - Begin - Copying the results of badgerdoc's work to the S3 bucket\n"
-aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_JOB_ID}" --recursive
+aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive
 error_check "ERROR happened during copying results to the S3 bucket\n"
 printf "STEP 4 - End\n"
 
@@ -60,7 +61,7 @@ error_check "ERROR happened during loading data to DB\n"
 printf "STEP 8 - End\n"
 
 printf "STEP 9 - Begin - Copying result files to the S3 bucket\n"
-aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_JOB_ID}" --recursive
+aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive
 error_check "ERROR happened during copying results to the S3 bucket\n"
 printf "STEP 9 - End\n"
 
