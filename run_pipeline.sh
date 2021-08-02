@@ -26,7 +26,7 @@ printf "STEP 1 - End\n"
 
 printf "STEP 2 - Begin - Copying files from S3 bucket to local drive\n"
 aws s3 cp "${_S3_FILE_URI}" "${_INPUT_DIR}/${S3_FILE_NAME}"
-error_check "ERROR happened during copying files form S3 bucket\n"
+error_check 'ERROR happened during copying files form S3 bucket\n'
 printf "STEP 2 - End \n"
 
 printf "STEP 3 - Begin - Running badgerdoc \n"
