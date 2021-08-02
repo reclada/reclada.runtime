@@ -111,7 +111,7 @@ class Runner:
         # if yes then we need to add extra parameter for run_pipeline.sh
         custom_task = os.getenv('CUSTOM_TASK', None)
         # prepare folder's names for S3 bucket
-        s3_output_dir = datetime.now().strftime("%Y/%m/%d/%H/%M/%S/%f/")
+        s3_output_dir = datetime.now().strftime("%Y/%m/%d/%H:%M:%S:%f/")
         s3_output_dir += job.id
         params = [s3_uri, file_id, job.id, s3_output_dir]
         if custom_task:
