@@ -12,7 +12,7 @@ function error_check(){
 export _S3_FILE_URI="$1"
 _FILE_ID="$2"
 _JOB_ID="$3"
-_S3_OUTPUT_DIR="$4"
+export _S3_OUTPUT_DIR="$4"
 _CUSTOM_TASK="$5"
 _INPUT_DIR="/mnt/input/${_JOB_ID}"
 export _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
