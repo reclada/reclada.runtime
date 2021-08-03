@@ -101,7 +101,7 @@ class Runner:
         # TODO: resolve all input parameters
         s3_uri = job.input_parameters[0]['uri']
         file_id = job.input_parameters[1]['dataSourceId']
-        s3_output_dir = datetime.now().strftime("%Y/%m/%d/%H:%M:%S:%f/") + job.id
+        s3_output_dir = datetime.now().strftime('%Y/%m/%d/%H:%M:%S:%f/') + job.id
         params = [s3_uri, file_id, job.id, s3_output_dir]
 
         # Here we need to check if CUSTOM_TASK environment is defined
@@ -191,21 +191,22 @@ class Runner:
 
     def pre_process(self):
         """
-            This method checks for unfinished jobs and returns their
-            statuses to PENDING
+        This method checks for unfinished jobs and returns their
+        statuses to PENDING
+        
         """
         # Check if there are jobs in Running status
         running_jobs = self._job_db.get_jobs(self.id, JobStatus.RUNNING.value)
-        self._logger.info(f"Checking for unfinished jobs.")
+        self._logger.info('Checking for unfinished jobs')
         # if there are some jobs in Running state then
         # we need to change the status of these jobs to Pending
         if running_jobs:
             for running_job in running_jobs:
                 running_job.status = JobStatus.PENDING
-                self._logger.info(f"The status of job {running_job.id} was restored to PENDING.")
+                self._logger.info(f'The status of job {running_job.id} was restored to PENDING')
                 self._job_db.save_job(running_job)
         else:
-            self._logger.info(f"No unfinished jobs were found.")
+            self._logger.info('No unfinished jobs were found')
 
 
 class RunnerDB:
@@ -258,7 +259,7 @@ class RunnerDB:
                 'type': runner.type,
                 'task': runner.task,
                 'environment': runner.environment,
-                'last_update': datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+                'last_update': datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
             },
         }
         self.db_client.send_request('update', json.dumps(data))
@@ -266,14 +267,14 @@ class RunnerDB:
 
     def send_notification(self, runner):
         """
-           Send a notification to the coordinator
-        """
+        Send a notification to the coordinator
 
+        """
         data = {
             'class': 'Runner',
             'id': runner.id,
             'attrs': {
-                'status': runner.status.value
+                'status': runner.status.value,
             },
         }
 
@@ -289,7 +290,7 @@ def main(version, runner_id, db_client, verbose):
     # if parameter version is specified then
     # the version number is supposed to be printed
     if version:
-        print(f'Runner version {__version__}.')
+        print(f'Runner version {__version__}')
         return
 
     # set the logging level based on the specified parameter --verbose
@@ -314,7 +315,7 @@ def main(version, runner_id, db_client, verbose):
     # to copy files to/from S3 bucket
     s3 = S3
 
-    runner_logger.info(f'Runner v{__version__} started.')
+    runner_logger.info(f'Runner v{__version__} started')
 
     # reads Runner from DB by runner_id
     runner = runner_db.get_runner(runner_id, runner_db, job_db, s3, runner_logger)

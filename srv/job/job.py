@@ -114,7 +114,6 @@ class JobDB:
         Gets new jobs from DB that are assigned to runner and returns list of Job instances
 
         """
-
         data = {
             'class': 'Job',
             'attrs': {
