@@ -94,40 +94,54 @@ class Runner:
         Runs job
 
         """
-        # updates job status in DB to "running"
-        job.status = JobStatus.RUNNING
-        self._job_db.save_job(job)
-        self._logger.info(f'Runner {self.id} changed job {job.id} status to {job.status.value}')
-
-        # runs job
-        # TODO: resolve all input parameters
-        s3_uri = job.input_parameters[0]['uri']
-        file_id = job.input_parameters[1]['dataSourceId']
         command = job.command.split()
         self._logger.info(f'Runner {self.id} is launching job {job.id} with command {job.command} '
                           f'and parameters {job.input_parameters}')
 
+        # TODO: resolve all input parameters
+        s3_uri = job.input_parameters[0]['uri']
+        file_id = job.input_parameters[1]['dataSourceId']
+        s3_output_dir = datetime.now().strftime("%Y/%m/%d/%H:%M:%S:%f/") + job.id
+        params = [s3_uri, file_id, job.id, s3_output_dir]
+
         # Here we need to check if CUSTOM_TASK environment is defined
         # if yes then we need to add extra parameter for run_pipeline.sh
-        custom_task = os.getenv('CUSTOM_TASK', None)
-        # prepare folder's names for S3 bucket
-        s3_output_dir = datetime.now().strftime("%Y/%m/%d/%H:%M:%S:%f/")
-        s3_output_dir += job.id
-        params = [s3_uri, file_id, job.id, s3_output_dir]
+        custom_task = os.getenv('CUSTOM_TASK')
         if custom_task:
             params.append(custom_task)
 
-        job_result = subprocess.run(command + params, cwd=os.getenv('RECLADA_REPO_PATH'))
+        job_returncode, job_stdout, job_stderr = 1, '', ''
 
-        # updates job status in DB depending on the job return code
-        if job_result.returncode == 0:
-            job.status = JobStatus.SUCCESS
-        else:
-            job.status = JobStatus.FAILED
-        self._job_db.save_job(job)
-        self._logger.info(f'Runner {self.id} changed job {job.id} status to {job.status.value}')
+        for _ in range(job.retries + 1):
+            # updates job status in DB to "running"
+            job.status = JobStatus.RUNNING
+            self._job_db.save_job(job)
+            self._logger.info(f'Runner {self.id} changed job {job.id} status to {job.status.value}')
 
-        return job_result
+            try:
+                job_result = subprocess.run(command + params, timeout=job.timeout, cwd=os.getenv('RECLADA_REPO_PATH'))
+            except subprocess.TimeoutExpired as e:
+                job_stdout = e.stdout
+                job_stderr = e.stderr
+            else:
+                job_returncode = job_result.returncode
+                job_stdout = job_result.stdout
+                job_stderr = job_result.stderr
+            finally:
+                # updates job status in DB depending on the job return code
+                if job_returncode == 0:
+                    job.status = JobStatus.SUCCESS
+                else:
+                    job.status = JobStatus.FAILED
+
+                self._job_db.save_job(job)
+                self._logger.info(f'Runner {self.id} changed job {job.id} status to {job.status.value}')
+
+                # stop retrying if job successfully finished
+                if not job_returncode:
+                    break
+
+        return job_returncode, job_stdout, job_stderr
 
     def run(self):
         """
@@ -152,10 +166,7 @@ class Runner:
 
                 # process all new jobs found in DB
                 for job in self.jobs:
-                    job_result = self.run_job(job)
-                    job_stdout = job_result.stdout
-                    job_stderr = job_result.stderr
-                    job_returncode = job_result.returncode
+                    job_returncode, job_stdout, job_stderr = self.run_job(job)
 
                 # updates runner status in DB to "idle" when all jobs finished
                 self.status = RunnerStatus.IDLE

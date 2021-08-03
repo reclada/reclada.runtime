@@ -1,4 +1,5 @@
 import json
+import os
 from enum import Enum
 
 
@@ -48,6 +49,36 @@ class Job:
             raise error
 
         self._status = new_status
+
+    @property
+    def timeout(self):
+        """
+        Job timeout
+
+        """
+        for parameter in self.input_parameters:
+            if parameter.get('timeout'):
+                return parameter.get('timeout')
+
+        if os.getenv('JOB_TIMEOUT'):
+            return int(os.getenv('JOB_TIMEOUT'))
+
+        return 3600  # 1h in secs
+
+    @property
+    def retries(self):
+        """
+        Number of job retries
+
+        """
+        for parameter in self.input_parameters:
+            if parameter.get('retries'):
+                return parameter.get('retries')
+
+        if os.getenv('JOB_RETRIES'):
+            return int(os.getenv('JOB_RETRIES'))
+
+        return 0
 
 
 class JobDB:
