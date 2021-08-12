@@ -4,6 +4,7 @@ Reads S3 folder and creates datasource in DB
 import argparse
 import json
 import os
+import mimetypes
 from urllib.parse import urlparse
 
 import boto3
@@ -53,12 +54,16 @@ class S3Folder:
 def lambda_handler(uri):
     cursor = connection.cursor()
 
+    # determine mime type for the file
+    mime_type = mimetypes.MimeTypes().guess_type(uri.split('/')[-1])[0]
+
     try:
         data = {
-            'class': 'DataSource',
+            'class': 'File',
             'attrs': {
                 'name': uri.split('/')[-1],
                 'uri': uri,
+                'mime': mime_type,
             },
         }
 

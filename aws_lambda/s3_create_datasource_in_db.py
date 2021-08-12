@@ -7,6 +7,7 @@ import os
 from urllib.parse import unquote_plus
 
 from psycopg2.pool import SimpleConnectionPool
+import mimetypes
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -37,11 +38,15 @@ def lambda_handler(event, context):
             if key.endswith('/'):  # if key is folder
                 continue
 
+            # determine the mime type for the file
+            mime_type = mimetypes.MimeTypes().guess_type(name)[0]
+
             data = {
-                'class': 'DataSource',
+                'class': 'File',
                 'attrs': {
                     'name': name,
                     'uri': uri,
+                    'mime': mime_type,
                 },
             }
 
