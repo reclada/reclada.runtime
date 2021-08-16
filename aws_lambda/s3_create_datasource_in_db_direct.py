@@ -55,7 +55,10 @@ def lambda_handler(uri):
     cursor = connection.cursor()
 
     # determine mime type for the file
-    mime_type = mimetypes.MimeTypes().guess_type(uri.split('/')[-1])[0]
+    mimetypes.init()
+    mimetypes.add_type("application/vnd.ms-excel", ".xls", strict=True)
+    mimetypes.add_type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx", strict=True)
+    mime_type = mimetypes.guess_type(uri)[0]
 
     try:
         data = {
