@@ -64,6 +64,7 @@ def lambda_handler(uri):
                 'name': uri.split('/')[-1],
                 'uri': uri,
                 'mimeType': mime_type,
+                'checksum': '',
             },
         }
 

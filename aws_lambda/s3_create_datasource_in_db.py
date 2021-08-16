@@ -47,6 +47,7 @@ def lambda_handler(event, context):
                     'name': name,
                     'uri': uri,
                     'mimeType': mime_type,
+                    'checksum': '',
                 },
             }
 
