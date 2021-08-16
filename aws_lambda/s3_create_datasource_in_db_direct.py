@@ -56,9 +56,13 @@ def lambda_handler(uri):
 
     # determine mime type for the file
     mimetypes.init()
+    # adding two mime types for excel spreadsheets
     mimetypes.add_type("application/vnd.ms-excel", ".xls", strict=True)
     mimetypes.add_type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx", strict=True)
+    # extracting mime type
     mime_type = mimetypes.guess_type(uri)[0]
+    # if mime type is not found then set it to unknown
+    if not mime_type: mime_type = 'unknown'
 
     try:
         data = {
