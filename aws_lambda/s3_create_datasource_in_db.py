@@ -46,7 +46,7 @@ def lambda_handler(event, context):
                 'attrs': {
                     'name': name,
                     'uri': uri,
-                    'mime': mime_type,
+                    'mimeType': mime_type,
                 },
             }
 
