@@ -3,11 +3,11 @@ Creates datasource in DB when a new file appears in S3
 """
 import json
 import logging
+import mimetypes
 import os
 from urllib.parse import unquote_plus
 
 from psycopg2.pool import SimpleConnectionPool
-import mimetypes
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -21,6 +21,10 @@ connection_pool = SimpleConnectionPool(
     password=os.getenv('PG_PASSWORD'),
 )
 
+# determine the mime type for the file
+mimetypes.init()
+# adding two mime types for excel spreadsheet
+mimetypes.add_type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx", strict=True)
 
 def lambda_handler(event, context):
     logger.info(f'Event: {event}')
@@ -38,22 +42,15 @@ def lambda_handler(event, context):
             if key.endswith('/'):  # if key is folder
                 continue
 
-            # determine the mime type for the file
-            mimetypes.init()
-            # adding two mime types for excel spreadsheet
-            mimetypes.add_type("application/vnd.ms-excel", ".xls", strict=True)
-            mimetypes.add_type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx", strict=True)
             # extract mime type from file name
             mime_type = mimetypes.guess_type(uri)[0]
-            # if mime type is not found then set it unknown
-            if not mime_type: mime_type = 'unknown'
 
             data = {
                 'class': 'File',
                 'attrs': {
                     'name': name,
                     'uri': uri,
-                    'mimeType': mime_type,
+                    'mimeType': mime_type or "unknown",
                     'checksum': '',
                 },
             }
