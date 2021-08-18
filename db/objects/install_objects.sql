@@ -27,3 +27,6 @@
 
 \echo   ... Environment
 \i environment/environment_schema.sql
+
+\echo   ... FileExtension
+\i file_extension/file_extension_schema.sql
