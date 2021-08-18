@@ -3,6 +3,7 @@ Creates datasource in DB when a new file appears in S3
 """
 import json
 import logging
+import mimetypes
 import os
 from urllib.parse import unquote_plus
 
@@ -20,6 +21,10 @@ connection_pool = SimpleConnectionPool(
     password=os.getenv('PG_PASSWORD'),
 )
 
+# determine the mime type for the file
+mimetypes.init()
+# adding two mime types for excel spreadsheet
+mimetypes.add_type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx", strict=True)
 
 def lambda_handler(event, context):
     logger.info(f'Event: {event}')
@@ -37,11 +42,16 @@ def lambda_handler(event, context):
             if key.endswith('/'):  # if key is folder
                 continue
 
+            # extract mime type from file name
+            mime_type = mimetypes.guess_type(uri)[0]
+
             data = {
-                'class': 'DataSource',
+                'class': 'File',
                 'attrs': {
                     'name': name,
                     'uri': uri,
+                    'mimeType': mime_type or "unknown",
+                    'checksum': '',
                 },
             }
 
