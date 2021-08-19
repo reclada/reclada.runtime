@@ -94,40 +94,54 @@ class Runner:
         Runs job
 
         """
-        # updates job status in DB to "running"
-        job.status = JobStatus.RUNNING
-        self._job_db.save_job(job)
-        self._logger.info(f'Runner {self.id} changed job {job.id} status to {job.status.value}')
-
-        # runs job
-        # TODO: resolve all input parameters
-        s3_uri = job.input_parameters[0]['uri']
-        file_id = job.input_parameters[1]['dataSourceId']
         command = job.command.split()
         self._logger.info(f'Runner {self.id} is launching job {job.id} with command {job.command} '
                           f'and parameters {job.input_parameters}')
 
+        # TODO: resolve all input parameters
+        s3_uri = job.input_parameters[0]['uri']
+        file_id = job.input_parameters[1]['dataSourceId']
+        s3_output_dir = datetime.now().strftime('%Y/%m/%d/%H:%M:%S:%f/') + job.id
+        params = [s3_uri, file_id, job.id, s3_output_dir]
+
         # Here we need to check if CUSTOM_TASK environment is defined
         # if yes then we need to add extra parameter for run_pipeline.sh
-        custom_task = os.getenv('CUSTOM_TASK', None)
-        # prepare folder's names for S3 bucket
-        s3_output_dir = datetime.now().strftime("%Y/%m/%d/%H:%M:%S:%f/")
-        s3_output_dir += job.id
-        params = [s3_uri, file_id, job.id, s3_output_dir]
+        custom_task = os.getenv('CUSTOM_TASK')
         if custom_task:
             params.append(custom_task)
 
-        job_result = subprocess.run(command + params, cwd=os.getenv('RECLADA_REPO_PATH'))
+        job_returncode, job_stdout, job_stderr = 1, '', ''
 
-        # updates job status in DB depending on the job return code
-        if job_result.returncode == 0:
-            job.status = JobStatus.SUCCESS
-        else:
-            job.status = JobStatus.FAILED
-        self._job_db.save_job(job)
-        self._logger.info(f'Runner {self.id} changed job {job.id} status to {job.status.value}')
+        for _ in range(job.retries + 1):
+            # updates job status in DB to "running"
+            job.status = JobStatus.RUNNING
+            self._job_db.save_job(job)
+            self._logger.info(f'Runner {self.id} changed job {job.id} status to {job.status.value}')
 
-        return job_result
+            try:
+                job_result = subprocess.run(command + params, timeout=job.timeout, cwd=os.getenv('RECLADA_REPO_PATH'))
+            except subprocess.TimeoutExpired as e:
+                job_stdout = e.stdout
+                job_stderr = e.stderr
+            else:
+                job_returncode = job_result.returncode
+                job_stdout = job_result.stdout
+                job_stderr = job_result.stderr
+            finally:
+                # updates job status in DB depending on the job return code
+                if job_returncode == 0:
+                    job.status = JobStatus.SUCCESS
+                else:
+                    job.status = JobStatus.FAILED
+
+                self._job_db.save_job(job)
+                self._logger.info(f'Runner {self.id} changed job {job.id} status to {job.status.value}')
+
+                # stop retrying if job successfully finished
+                if not job_returncode:
+                    break
+
+        return job_returncode, job_stdout, job_stderr
 
     def run(self):
         """
@@ -152,10 +166,7 @@ class Runner:
 
                 # process all new jobs found in DB
                 for job in self.jobs:
-                    job_result = self.run_job(job)
-                    job_stdout = job_result.stdout
-                    job_stderr = job_result.stderr
-                    job_returncode = job_result.returncode
+                    job_returncode, job_stdout, job_stderr = self.run_job(job)
 
                 # updates runner status in DB to "idle" when all jobs finished
                 self.status = RunnerStatus.IDLE
@@ -180,21 +191,22 @@ class Runner:
 
     def pre_process(self):
         """
-            This method checks for unfinished jobs and returns their
-            statuses to PENDING
+        This method checks for unfinished jobs and returns their
+        statuses to PENDING
+        
         """
         # Check if there are jobs in Running status
         running_jobs = self._job_db.get_jobs(self.id, JobStatus.RUNNING.value)
-        self._logger.info(f"Checking for unfinished jobs.")
+        self._logger.info('Checking for unfinished jobs')
         # if there are some jobs in Running state then
         # we need to change the status of these jobs to Pending
         if running_jobs:
             for running_job in running_jobs:
                 running_job.status = JobStatus.PENDING
-                self._logger.info(f"The status of job {running_job.id} was restored to PENDING.")
+                self._logger.info(f'The status of job {running_job.id} was restored to PENDING')
                 self._job_db.save_job(running_job)
         else:
-            self._logger.info(f"No unfinished jobs were found.")
+            self._logger.info('No unfinished jobs were found')
 
 
 class RunnerDB:
@@ -247,7 +259,7 @@ class RunnerDB:
                 'type': runner.type,
                 'task': runner.task,
                 'environment': runner.environment,
-                'last_update': datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+                'last_update': datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
             },
         }
         self.db_client.send_request('update', json.dumps(data))
@@ -255,14 +267,14 @@ class RunnerDB:
 
     def send_notification(self, runner):
         """
-           Send a notification to the coordinator
-        """
+        Send a notification to the coordinator
 
+        """
         data = {
             'class': 'Runner',
             'id': runner.id,
             'attrs': {
-                'status': runner.status.value
+                'status': runner.status.value,
             },
         }
 
@@ -278,7 +290,7 @@ def main(version, runner_id, db_client, verbose):
     # if parameter version is specified then
     # the version number is supposed to be printed
     if version:
-        print(f'Runner version {__version__}.')
+        print(f'Runner version {__version__}')
         return
 
     # set the logging level based on the specified parameter --verbose
@@ -303,7 +315,7 @@ def main(version, runner_id, db_client, verbose):
     # to copy files to/from S3 bucket
     s3 = S3
 
-    runner_logger.info(f'Runner v{__version__} started.')
+    runner_logger.info(f'Runner v{__version__} started')
 
     # reads Runner from DB by runner_id
     runner = runner_db.get_runner(runner_id, runner_db, job_db, s3, runner_logger)
