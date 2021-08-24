@@ -70,6 +70,10 @@ class K8s:
                             'image': self.image_repo,
                             'imagePullPolicy': 'Always',
                             'command': command.split(),
+                            'volumeMounts':{
+                                'name': os.getenv('PV_NAME'),
+                                'mountPath': '/data'
+                            },
                             'env': self.k8s_envs(),
                             'resources': {
                                 'limits': {
@@ -78,6 +82,12 @@ class K8s:
                                 },
                             },
                         }],
+                        'volumes':{
+                            'name': os.getenv('PV_NAME'),
+                            'persistentVolumeClaim':{
+                                'claimName': os.getenv('PV_NAME')
+                            }
+                        }
                     },
                 },
             },
