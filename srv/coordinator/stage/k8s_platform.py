@@ -7,7 +7,7 @@ from srv.coordinator.stage.stage import Stage
 K8S_ENV_KEYS = [
     'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_S3_BUCKET_NAME',
     'S3_REGION', 'S3_DEFAULT_REGION', 'DB_URI', 'CUSTOM_TASK', 'CLIENT_USER',
-    'CLIENT_URL', 'CUSTOM_REPO_PATH', 'CLIENT_PASSWORD',
+    'CLIENT_URL', 'CUSTOM_REPO_PATH', 'CLIENT_PASSWORD', 'PYTHONPATH',
 ]
 
 
@@ -69,11 +69,11 @@ class K8s:
                             'name': self.image,
                             'image': self.image_repo,
                             'imagePullPolicy': 'Always',
-                            'command': command.split(),
-                            'volumeMounts':{
-                                'name': os.getenv('PV_NAME'),
+                            'command': ["sleep","9999999"],
+                            'volumeMounts':[{
+                                'name': 'dev-6-storage',
                                 'mountPath': '/data'
-                            },
+                            }, ],
                             'env': self.k8s_envs(),
                             'resources': {
                                 'limits': {
@@ -82,12 +82,12 @@ class K8s:
                                 },
                             },
                         }],
-                        'volumes':{
-                            'name': os.getenv('PV_NAME'),
+                        'volumes':[{
+                            'name': 'dev-6-storage',
                             'persistentVolumeClaim':{
                                 'claimName': os.getenv('PV_NAME')
                             }
-                        }
+                        }, ]
                     },
                 },
             },
