@@ -21,7 +21,7 @@ class K8sPlatform(Stage):
     def create_runner(self, ref_to_stage, runner_id, db_type):
         image = 'badgerdoc'
         k8s = K8s(image)
-        command = f'python3 -m srv.runner.runner --runner-id={runner_id} --db-client={db_type}'
+        command = f'cd /data/reclada.runtime ; python3 -m srv.runner.runner --runner-id={runner_id} --db-client={db_type}'
         k8s.run(command, f'{image}-{runner_id}')
 
     def get_idle_runner(self, ref_to_stage):
