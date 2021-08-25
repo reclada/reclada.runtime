@@ -65,6 +65,14 @@ class K8s:
                     'spec': {
                         'serviceAccountName': os.getenv('K8S_SERVICE_ACCOUNT_NAME'),
                         'restartPolicy': 'Never',
+                        'volumes': [
+                            {
+                                'name': 'dev-6-storage',
+                                'persistentVolumeClaim': {
+                                    'claimName': 'dev6'
+                                }
+                            }
+                        ],
                         'containers': [{
                             'name': self.image,
                             'image': self.image_repo,
@@ -82,12 +90,7 @@ class K8s:
                                 },
                             },
                         }],
-                        'volumes':[{
-                            'name': 'dev-6-storage',
-                            'persistentVolumeClaim':{
-                                'claimName': os.getenv('PV_NAME')
-                            }
-                        }, ]
+                        
                     },
                 },
             },
