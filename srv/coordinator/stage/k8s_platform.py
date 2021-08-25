@@ -67,9 +67,9 @@ class K8s:
                         'restartPolicy': 'Never',
                         'volumes': [
                             {
-                                'name': 'dev-6-storage',
+                                'name': os.getenv('PV_NAME'),
                                 'persistentVolumeClaim': {
-                                    'claimName': 'dev6'
+                                    'claimName': os.getenv('PVC_NAME')
                                 }
                             }
                         ],
@@ -79,7 +79,7 @@ class K8s:
                             'imagePullPolicy': 'Always',
                             'command': ["sleep","9999999"],
                             'volumeMounts':[{
-                                'name': 'dev-6-storage',
+                                'name': os.getenv('PV_NAME'),
                                 'mountPath': '/data'
                             }, ],
                             'env': self.k8s_envs(),
