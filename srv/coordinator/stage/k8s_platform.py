@@ -77,7 +77,7 @@ class K8s:
                             'name': self.image,
                             'image': self.image_repo,
                             'imagePullPolicy': 'Always',
-                            'command': ["sleep","9999999"],
+                            'command': command.split(),
                             'volumeMounts':[{
                                 'name': os.getenv('PV_NAME'),
                                 'mountPath': '/data'
