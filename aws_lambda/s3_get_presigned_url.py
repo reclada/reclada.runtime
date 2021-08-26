@@ -1,9 +1,8 @@
 """
-Get presigned url for s3 object
+Get presigned url for S3 object
 """
 import logging
 import os
-from datetime import datetime
 from urllib.parse import urlparse
 
 import boto3
@@ -16,6 +15,12 @@ s3_client = boto3.client('s3')
 
 
 def generate_presigned_get(event):
+    """
+    Generates presigned URL for downloading from S3
+    """
+    if 'uri' not in event:
+        return {'error': 'uri parameter must be present'}
+
     parsed_uri = urlparse(event['uri'])
     bucket = parsed_uri.netloc
     key = parsed_uri.path.lstrip('/')
@@ -27,7 +32,7 @@ def generate_presigned_get(event):
                 'Bucket': bucket,
                 'Key': key,
             },
-            ExpiresIn=event['expiration'],
+            ExpiresIn=event.get('expiration') or 3600,
         )
     except ClientError as err:
         logging.error(err)
@@ -38,6 +43,18 @@ def generate_presigned_get(event):
 
 
 def generate_presigned_post(event):
+    """
+    Generates presigned URL for uploading to S3
+    """
+    if 'fileName' not in event:
+        return {'error': 'fileName parameter must be present'}
+
+    if 'fileType' not in event:
+        return {'error': 'fileType parameter must be present'}
+
+    if 'fileSize' not in event:
+        return {'error': 'fileSize parameter must be present'}
+
     try:
         response = s3_client.generate_presigned_post(
             Bucket=event.get('bucketName') or os.getenv('AWS_S3_BUCKET_NAME'),
@@ -52,7 +69,7 @@ def generate_presigned_post(event):
                 {'Content-Type': event['fileType']},
                 ['content-length-range', 1, event['fileSize']],
             ],
-            ExpiresIn=3600,
+            ExpiresIn=event.get('expiration') or 3600,
         )
     except ClientError as err:
         logging.error(err)
@@ -64,6 +81,9 @@ def generate_presigned_post(event):
 
 def lambda_handler(event, context):
     logger.info(f'Event: {event}')
+
+    if 'type' not in event:
+        return {'error': 'type parameter must be present'}
 
     request_type = event['type']
 
