@@ -38,16 +38,13 @@ def generate_presigned_get(event):
 
 
 def generate_presigned_post(event):
-    key = os.path.join(
-        'inbox/',
-        datetime.strftime(datetime.now(), '%Y/%m/%d/%H-%M-%S-%f/'),
-        event['fileName'],
-    )
-
     try:
         response = s3_client.generate_presigned_post(
-            Bucket=event['bucketName'],
-            Key=key,
+            Bucket=event.get('bucketName') or os.getenv('AWS_S3_BUCKET_NAME'),
+            Key=os.path.join(
+                event.get('folderPath') or 'inbox/',
+                event['fileName'],
+            ),
             Fields={
                 'Content-Type': event['fileType'],
             },
@@ -89,6 +86,7 @@ if __name__ == '__main__':
     event_post = {
         'type': 'post',
         'bucketName': 'bucket',
+        'folderPath': 'inbox/',
         'fileName': 'key.pdf',
         'fileType': 'application/pdf',
         'fileSize': 100,
