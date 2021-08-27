@@ -88,6 +88,10 @@ class K8s:
                                     'memory': '4Gi',
                                     'cpu': '2000m',
                                 },
+                                'requests': {
+                                    'memory': '1Gi',
+                                    'cpu': '500m',
+                                },
                             },
                         }],
                         
