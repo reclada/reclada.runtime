@@ -3,6 +3,8 @@ import os
 
 from cryptography.fernet import Fernet
 import boto3
+import click
+from _version import __version__
 
 
 class KMS :
@@ -18,8 +20,9 @@ class KMS :
         """
         self.master_key_name = master_key_name
         self._kms_client = boto3.client("kms")
+        self._get_master_key()
 
-    def get_master_key(self):
+    def _get_master_key(self):
         """
            The function requests the master keys from AWS and chooses the master key which
            name is the name of the master key saved during initialization of the class
@@ -32,15 +35,15 @@ class KMS :
             # if master key is found then return it
             if key_info["KeyMetadata"]["Description"] == self.master_key_name:
                 self._cmk_id = cmk["KeyId"]
-                self.create_data_key()
+                self._create_data_key()
                 return cmk["KeyId"], cmk["KeyArn"]
 
         # If no master key is found then create it
-        response = self.create_master_key()
-        self.create_data_key()
+        response = self._create_master_key()
+        self._create_data_key()
         return response
 
-    def create_master_key(self):
+    def _create_master_key(self):
         """
            This function creates a new master key
         """
@@ -50,7 +53,7 @@ class KMS :
         # return the key ID and ARN
         return response["KeyMetadata"]["KeyId"], response["KeyMetadata"]["Arn"]
 
-    def create_data_key(self, key_spec="AES_256"):
+    def _create_data_key(self, key_spec="AES_256"):
         """
            This function creates data key for the specified master key and saves it in the class
         """
@@ -69,9 +72,22 @@ class KMS :
         # check if the encrypted part of the key is present
         if not self._data_encrypted :
             return
+
+        # if the input data is str then we need to conver to bytes
+        if type(data) is str:
+            data = bytes(data, "utf-8")
+
         # encrypt the data
         f = Fernet(self._data_plain)
         encrypted_data = f.encrypt(data)
+        # now we need to include the encrypted part of the key to the encrypted data
+        # calculating the length of the encrypted data key
+        len_encrypted_key = f'{len(str(base64.b64encode(self._data_encrypted), "utf-8")):04}'
+
+        # saving the encrypted data key to the encypted data
+        encrypted_data = len_encrypted_key + \
+                         str(base64.b64encode(self._data_encrypted), "utf-8") + \
+                         str(encrypted_data,"utf-8")
         # return the encrypted data
         return encrypted_data
 
@@ -84,18 +100,56 @@ class KMS :
         if not self._data_plain:
             return
 
-        # decrypt the data
-        f = Fernet(self._data_plain)
-        plain_data = f.decrypt(encrypted_data)
+        # extracting the encrypted data key from the encrypted data
+        len_encrypted_key = int(encrypted_data[:4]) + 4
+        data_key_encrypted = encrypted_data[4:len_encrypted_key]
+        data_key_encrypted = bytes(data_key_encrypted, "utf-8")
+        data_key_encrypted = base64.b64decode(data_key_encrypted)
+        response = self._kms_client.decrypt(CiphertextBlob=data_key_encrypted)
+        data_plain_key = base64.b64encode((response["Plaintext"]))
 
-        return plain_data
+        # decrypt the data
+        f = Fernet(data_plain_key)
+        plain_data = f.decrypt(bytes(encrypted_data[len_encrypted_key:], "utf-8"))
+        return str(plain_data, "utf-8")
+
+
+@click.command()
+@click.option('--version', count=True)
+@click.option('--encrypt', count=True)
+@click.option('--data', type=str)
+@click.option('--decrypt', count=True)
+@click.option('--key', type=str)
+def main(version, encrypt, data, decrypt, key):
+
+    # if version option is specified then
+    # print version number and quit the app
+    if version:
+        print(f"Coordinator version {__version__}")
+        return
+
+    # if operation type is encrypt and decrypt at the same time
+    if encrypt and decrypt:
+        print(f"Operation type is not clear.")
+        return
+    # check if the master key is specified
+    if not key:
+        print(f"The master key needs to be specified.")
+
+    # if we need to encrypt data
+    if encrypt:
+        kms = KMS(key)
+        response = kms.encrypt_data(data)
+        print(f'{response}')
+        return
+
+    # if we need to decrypt data
+    if decrypt:
+        kms = KMS(key)
+        response = kms.decrypt_data(data)
+        print(f'{response}')
 
 
 if __name__ == "__main__":
-    kms = KMS("dev1_environment")
-    kms.get_master_key()
+    main()
 
-    encrypt_hello = kms.encrypt_data(bytes("Hello World!"))
-    print (f'Encrypted version:"{encrypt_hello}"')
-    decrypt_hello = kms.decrypt_data(encrypt_hello)
-    print(f'Plaint Text:"{decrypt_hello}"')
