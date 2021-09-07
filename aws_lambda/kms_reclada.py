@@ -3,11 +3,8 @@
 """
 import logging
 import os
-from urllib.parse import urlparse
 
-import boto3
-from botocore.exceptions import ClientError
-from srv.kms.kms import KMS
+from kms import KMS
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -31,11 +28,17 @@ def encrypt(payload):
         logger.error(error_text)
         return {'error': error_text}
 
+    logger.info(f'Data is present in payload.')
+
     # set the correct master key
     check_master_key(payload)
 
+    logger.info(f'Master Key is set.')
+
     # encrypt the data for the specified master key
+    logger.info(f'Encryption started.')
     response = kms.encrypt_data(payload['data'])
+    logger.info(f'Encryption ended.')
 
     # return json with the encrypted data
     return {'data': response}
@@ -58,12 +61,18 @@ def decrypt(payload):
         logger.error(error_text)
         return {'error': error_text}
 
+    logger.info(f'Data for decryption is present.')
+
     # check the master key in payload
     check_master_key(payload)
 
+    logger.info(f'Master Key is set.')
+
     # decrypt the data attribute
     try:
+        logger.info(f'Begin decrypting.')
         response = kms.decrypt_data(payload['data'])
+        logger.info(f'End decrypting.')
     except Exception as ex:
         logger.error(format(ex))
         return {'error': format(ex)}
@@ -83,6 +92,7 @@ def check_master_key(payload):
     # we need to create KMS with this master key
     if 'masterKey' in payload:
         kms = KMS(payload['masterKey'])
+        logger.info(f'Master Key is set.')
     else:
         if kms.master_key_name != master_key_description:
             kms = KMS(master_key_description)
@@ -98,6 +108,7 @@ def lambda_handler(event, context):
     # check if type attribute is present in payload
     if 'type' not in event:
         return {'error': 'type parameter must be present'}
+    logger.info(f'Type of operation is present.')
 
     # get request type
     request_type = event['type']
@@ -111,17 +122,4 @@ def lambda_handler(event, context):
         return {'error': 'request type not supported'}
 
 
-if __name__ == '__main__':
-    event_get = {
-        'type': 'encrypt',
-        'masterKey': 'dev_reclada',
-        'data': 's3://bucket/key.pdf',
-    }
-    print(lambda_handler(event_get, None))
 
-    event_post = {
-        'type': 'decrypt',
-        'masterKey': 'dev_reclada',
-        'data': 'inbox/',
-    }
-    print(lambda_handler(event_post, None))
