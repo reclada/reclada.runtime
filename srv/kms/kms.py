@@ -10,13 +10,13 @@ class KMS :
         with encrypted data with the help of KMS AWS
     """
 
-    def __init__(self, master_key_name):
+    def __init__(self, master_key_name, aws_access_key, aws_secret_key):
         """
            Initializer of KMS class stores the name of the master key and creates
            a client to work with AWS
         """
         self.master_key_name = master_key_name
-        self._kms_client = boto3.client("kms")
+        self._kms_client = boto3.client("kms", aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
         self._get_master_key()
 
     def _get_master_key(self):

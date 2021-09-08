@@ -10,7 +10,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 master_key_description = os.getenv("KMS_MASTER_KEY") or "dev_reclada"
-kms = KMS(master_key_description)
+aws_access_key = os.getenv("AWS_ACCESS_KEY") or None
+aws_secret_access_key = os.getenv("AWS_SECRET_KEY") or None
+kms = KMS(master_key_description, aws_access_key, aws_secret_access_key)
 
 def encrypt(payload):
     """
@@ -66,7 +68,7 @@ def decrypt(payload):
     # check the master key in payload
     check_master_key(payload)
 
-    logger.info(f'Master Key is set.')
+    logger.info(f'Master Key is set{master_key_description}.')
 
     # decrypt the data attribute
     try:
@@ -90,12 +92,18 @@ def check_master_key(payload):
     global kms
     # check if master key name is specified in payload then
     # we need to create KMS with this master key
-    if 'masterKey' in payload:
-        kms = KMS(payload['masterKey'])
-        logger.info(f'Master Key is set.')
+
+
+
+    if 'masterKey' in payload or 'aws_access_key' in payload:
+        aws_access_key = payload['aws_access_key']
+        aws_secret_access_key = payload['aws_access_secret_key']
+        kms = KMS(payload['masterKey'], aws_access_key, aws_secret_access_key)
+        logger.info(f'Master Key is set.{payload["masterKey"]} - {aws_access_key}')
     else:
         if kms.master_key_name != master_key_description:
-            kms = KMS(master_key_description)
+            if aws_access_key != payload["aws_access_key"]:
+                kms = KMS(master_key_description)
 
 
 def lambda_handler(event, context):
