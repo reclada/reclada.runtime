@@ -10,9 +10,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 master_key_description = os.getenv("KMS_MASTER_KEY") or "dev_reclada"
-aws_access_key = os.getenv("AWS_ACCESS_KEY") or None
-aws_secret_access_key = os.getenv("AWS_SECRET_KEY") or None
-kms = KMS(master_key_description, aws_access_key, aws_secret_access_key)
+aws_access_key = os.getenv("AWS_ACCESS_KEY_RECLADA") or None
+aws_access_secret_key = os.getenv("AWS_SECRET_KEY_RECLADA") or None
+kms_client = None
 
 def encrypt(payload):
     """
@@ -22,6 +22,8 @@ def encrypt(payload):
              'type' - the type of actions [encrypt]
              'data' - the data for which the requested action needs to be executed
              'masterKey' - the name of the master key
+             'aws_access_key' - user's AWS key
+             'aws_access_secret_key' - user's AWS secret key
            }
     """
 
@@ -30,17 +32,11 @@ def encrypt(payload):
         logger.error(error_text)
         return {'error': error_text}
 
-    logger.info(f'Data is present in payload.')
-
     # set the correct master key
     check_master_key(payload)
 
-    logger.info(f'Master Key is set.')
-
     # encrypt the data for the specified master key
-    logger.info(f'Encryption started.')
-    response = kms.encrypt_data(payload['data'])
-    logger.info(f'Encryption ended.')
+    response = kms_client.encrypt_data(payload['data'])
 
     # return json with the encrypted data
     return {'data': response}
@@ -54,8 +50,11 @@ def decrypt(payload):
              'type' - the type of actions [decrypt]
              'data' - the data for which the requested action needs to be executed
              'masterKey' - the name of the master key
+             'aws_access_key' - user's AWS key
+             'aws_access_secret_key' - user's AWS secret key
            }
     """
+    global kms_client
 
     # check if data attribute is present in payload
     if 'data' not in payload:
@@ -63,18 +62,12 @@ def decrypt(payload):
         logger.error(error_text)
         return {'error': error_text}
 
-    logger.info(f'Data for decryption is present.')
-
     # check the master key in payload
     check_master_key(payload)
 
-    logger.info(f'Master Key is set{master_key_description}.')
-
     # decrypt the data attribute
     try:
-        logger.info(f'Begin decrypting.')
-        response = kms.decrypt_data(payload['data'])
-        logger.info(f'End decrypting.')
+        response = kms_client.decrypt_data(payload['data'])
     except Exception as ex:
         logger.error(format(ex))
         return {'error': format(ex)}
@@ -89,22 +82,25 @@ def check_master_key(payload):
        present then checks if the current master key is the same as specified during
        initialization if it is not then create the KMS client with the default master key
     """
-    global kms
+    global kms_client, master_key_description
     # check if master key name is specified in payload then
     # we need to create KMS with this master key
 
-
-
-    if 'masterKey' in payload or 'aws_access_key' in payload:
+    if 'aws_access_key' in payload and 'aws_access_secret_key' in payload:
         aws_access_key = payload['aws_access_key']
-        aws_secret_access_key = payload['aws_access_secret_key']
-        kms = KMS(payload['masterKey'], aws_access_key, aws_secret_access_key)
-        logger.info(f'Master Key is set.{payload["masterKey"]} - {aws_access_key}')
+        aws_access_secret_key = payload['aws_access_secret_key']
     else:
-        if kms.master_key_name != master_key_description:
-            if aws_access_key != payload["aws_access_key"]:
-                kms = KMS(master_key_description)
+        aws_access_key = os.getenv("AWS_ACCESS_KEY_RECLADA") or None
+        aws_access_secret_key = os.getenv("AWS_SECRET_KEY_RECLADA") or None
 
+    if 'masterKey' in payload:
+        master_key_description = payload['masterKey']
+        kms_client = KMS(master_key_description, aws_access_key, aws_access_secret_key)
+        logger.info(f'Master Key is set {payload["masterKey"]} - {aws_access_key}')
+    else:
+        if kms_client is None or kms_client.master_key_name != master_key_description:
+            kms_client = KMS(master_key_description, aws_access_key, aws_access_secret_key)
+    logger.info(f'Master Key is set {payload["masterKey"]} - {aws_access_key}')
 
 def lambda_handler(event, context):
     """
