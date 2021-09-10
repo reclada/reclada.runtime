@@ -1,8 +1,9 @@
 """
-Creates datasource in DB when a new file appears in S3
+Creates object of the class File (subclass of DataSource) in DB when a new file appears in S3
 """
 import json
 import logging
+import mimetypes
 import os
 from urllib.parse import unquote_plus
 
@@ -21,6 +22,44 @@ connection_pool = SimpleConnectionPool(
 )
 
 
+def update_mimetypes():
+    """
+    Adds mime types from DB
+
+    """
+    connection = connection_pool.getconn()
+    cursor = connection.cursor()
+
+    data = {
+        'class': 'FileExtension',
+        'attrs': {},
+    }
+    try:
+        # Read file extensions form DB
+        cursor.callproc('reclada_object.list', [json.dumps(data)])
+        extensions = cursor.fetchall()[0][0]
+
+        if extensions is None:
+            return
+
+        # Add new mime types to the list of known ones
+        for extension in extensions:
+            mimetypes.add_type(
+                type=extension['attrs']['mimeType'],
+                ext=extension['attrs']['extension'],
+                strict=False,
+            )
+    except Exception as err:
+        logger.error(f'An exception occurred while receiving mimetypes: {err}')
+    finally:
+        cursor.close()
+        connection_pool.putconn(connection)
+
+
+mimetypes.init()
+update_mimetypes()
+
+
 def lambda_handler(event, context):
     logger.info(f'Event: {event}')
 
@@ -29,6 +68,7 @@ def lambda_handler(event, context):
 
     try:
         for record in event['Records']:
+            checksum = record['s3']['object']['eTag']
             bucket = record['s3']['bucket']['name']
             key = unquote_plus(record['s3']['object']['key'])
             name = key.split('/')[-1]
@@ -37,15 +77,21 @@ def lambda_handler(event, context):
             if key.endswith('/'):  # if key is folder
                 continue
 
+            # Determine the mime type
+            mime_type = mimetypes.guess_type(uri, strict=False)[0]
+
             data = {
-                'class': 'DataSource',
+                'class': 'File',
                 'attrs': {
                     'name': name,
                     'uri': uri,
+                    'mimeType': mime_type or 'unknown',
+                    'checksum': checksum,
                 },
             }
-
+            # Create object in DB
             cursor.callproc('reclada_object.create', [json.dumps(data)])
+
         connection.commit()
     except Exception as err:
         logger.error(f'An exception occurred while creating datasource: {err}')
