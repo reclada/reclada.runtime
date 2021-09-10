@@ -44,7 +44,9 @@ The installation process for kms-reclada lambda function consists of several ste
             "Effect": "Allow",
             "Action": [
                 "kms:GenerateDataKey",
-                "kms:DescribeKey"
+                "kms:DescribeKey",
+                "kms:Decrypt",
+                "kms:Encrypt"
             ],
             "Resource": "*"
         }
