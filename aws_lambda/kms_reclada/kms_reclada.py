@@ -10,8 +10,8 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 master_key_description = os.getenv("KMS_MASTER_KEY") or "dev_reclada"
-aws_access_key = os.getenv("AWS_ACCESS_KEY_RECLADA") or os.getenv("AWS_ACCESS_KEY")
-aws_access_secret_key = os.getenv("AWS_SECRET_KEY_RECLADA") or os.getenv("AWS_ACCESS_KEY")
+aws_access_key = os.getenv("AWS_ACCESS_KEY_RECLADA") or os.getenv("AWS_ACCESS_KEY_ID")
+aws_access_secret_key = os.getenv("AWS_SECRET_KEY_RECLADA") or os.getenv("AWS_SECRET_ACCESS_KEY")
 kms_client = None
 
 def encrypt(payload):
