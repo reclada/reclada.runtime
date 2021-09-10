@@ -66,6 +66,7 @@ def generate_presigned_post(event):
                 'Content-Type': event['fileType'],
             },
             Conditions=[
+                {'Content-Type': event['fileType']},
                 ['content-length-range', 1, event['fileSize']],
             ],
             ExpiresIn=event.get('expiration') or 3600,
