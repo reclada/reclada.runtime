@@ -63,7 +63,7 @@ class JobDB:
         data = {
             'class': 'Job',
             'id': _id,
-            'attrs': {},
+            'attributes': {},
         }
         job = self.db_client.send_request('list', json.dumps(data))
 
@@ -86,7 +86,7 @@ class JobDB:
 
         data = {
             'class': 'Job',
-            'attrs': {
+            'attributes': {
                 'runner': runner_id,
                 'status': status
             },
@@ -98,24 +98,24 @@ class JobDB:
         else:
             return [Job(
                 id_=job['id'],
-                type_=job['attrs']['type'],
-                task=job['attrs']['task'],
-                command=job['attrs']['command'],
-                input_parameters=job['attrs']['inputParameters'],
+                type_=job['attributes']['type'],
+                task=job['attributes']['task'],
+                command=job['attributes']['command'],
+                input_parameters=job['attributes']['inputParameters'],
                 status=JobStatus.NEW,
-                runner_id=job['attrs']['runner'],
+                runner_id=job['attributes']['runner'],
                 job_logger=self._logger,
-            ) for job in jobs if job.get('attrs').get('inputParameters')]  # TODO: proper inputParameters check
+            ) for job in jobs if job.get('attributes').get('inputParameters')]  # TODO: proper inputParameters check
 
     def save_job(self, job):
         """
-        Updates job in DB (only updates status now, but needed to specify all required attrs)
+        Updates job in DB (only updates status now, but needed to specify all required attributes)
 
         """
         data = {
             'class': 'Job',
             'id': job.id,
-            'attrs': {
+            'attributes': {
                 'type': job.type,
                 'task': job.task,
                 'command': job.command,
