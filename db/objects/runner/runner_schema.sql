@@ -1,6 +1,6 @@
 SELECT reclada_object.create_subclass('{
     "class": "Job",
-    "attrs": {
+    "attributes": {
         "newClass": "Runner",
         "properties": {
             "environment": {
@@ -24,7 +24,7 @@ SELECT reclada_object.create_subclass('{
 SELECT reclada_object.create('
    {
    "class": "Runner",
-    "attrs": {
+    "attributes": {
         "task": "512a3dde-23c7-4771-b180-20f8781ac084",
         "type": "K8S",
         "status": "down",

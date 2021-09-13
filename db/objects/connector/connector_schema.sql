@@ -1,6 +1,6 @@
 SELECT reclada_object.create_subclass('{
     "class": "Task",
-    "attrs": {
+    "attributes": {
         "newClass": "Connector",
         "properties": {
             "connectionDetails": {"type": "string"},
