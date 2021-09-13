@@ -32,7 +32,7 @@ def update_mimetypes():
 
     data = {
         'class': 'FileExtension',
-        'attrs': {},
+        'attributes': {},
     }
     try:
         # Read file extensions form DB
@@ -45,8 +45,8 @@ def update_mimetypes():
         # Add new mime types to the list of known ones
         for extension in extensions:
             mimetypes.add_type(
-                type=extension['attrs']['mimeType'],
-                ext=extension['attrs']['extension'],
+                type=extension['attributes']['mimeType'],
+                ext=extension['attributes']['extension'],
                 strict=False,
             )
     except Exception as err:
@@ -82,7 +82,7 @@ def lambda_handler(event, context):
 
             data = {
                 'class': 'File',
-                'attrs': {
+                'attributes': {
                     'name': name,
                     'uri': uri,
                     'mimeType': mime_type or 'unknown',

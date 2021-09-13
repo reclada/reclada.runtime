@@ -1,6 +1,6 @@
 SELECT reclada_object.create_subclass('{
     "class": "RecladaObject",
-    "attrs": {
+    "attributes": {
         "newClass": "FileExtension",
         "properties": {
             "extension": {"type": "string"},
@@ -12,7 +12,7 @@ SELECT reclada_object.create_subclass('{
 
 SELECT reclada_object.create('{
     "class" : "FileExtension",
-    "attrs": {
+    "attributes": {
         "extension" : ".xlsx",
         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 

@@ -59,10 +59,10 @@ if __name__ == "__main__":
 
     results = p_dbclient.send_request("list", '{"class":"jsonschema"}')
 
-    results = p_dbclient.send_request("list",'{"class": "Job", "attrs": { "status" : "fail" }}')
+    results = p_dbclient.send_request("list",'{"class": "Job", "attributes": { "status" : "fail" }}')
     jobs_for_processing = results[0]
     for job in jobs_for_processing[0]:
-        task_id = job["attrs"]["task"]
-        task = p_dbclient.send_request("list",'{"class": "Task", "attrs": { "id":"' + job["attrs"]["task"] + '"}}')
+        task_id = job["attributes"]["task"]
+        task = p_dbclient.send_request("list",'{"class": "Task", "attributes": { "GUID":"' + job["attributes"]["task"] + '"}}')
         print(job)
 
