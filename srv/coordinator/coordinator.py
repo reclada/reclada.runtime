@@ -236,7 +236,7 @@ class Coordinator():
                     # then we need to changes status of the runner to Down
                     if runner["attributes"]["status"] == RunnerState.IDLE.value and time.time() - last_time > 300:
                         runner["attributes"]["status"] = RunnerState.DOWN.value
-                        self._log.info(f"The state of runner {runner['id']} was restored to DOWN.")
+                        self._log.info(f"The state of runner {runner['GUID']} was restored to DOWN.")
                         self._db_runner.save([runner])
 
 
