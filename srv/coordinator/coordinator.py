@@ -158,7 +158,7 @@ class Coordinator():
                     job["attributes"]["runner"] = runner.id
                     job["attributes"]["status"] = "pending"
                     self._db_jobs.save(job)
-                    self._log.info(f"The job with id {job['id']} was assigned to the runner {runner.id}")
+                    self._log.info(f"The job with id {job['GUID']} was assigned to the runner {runner.id}")
                 else:
                     job["attributes"]["status"] = "failed"
                     self._db_jobs.save(job)

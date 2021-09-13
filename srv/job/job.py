@@ -62,13 +62,13 @@ class JobDB:
         """
         data = {
             'class': 'Job',
-            'id': _id,
+            'GUID': _id,
             'attributes': {},
         }
         job = self.db_client.send_request('list', json.dumps(data))
 
         return Job(
-            id_=job['id'],
+            id_=job['GUID'],
             type_=job['type'],
             task=job['task'],
             command=job['command'],
@@ -97,7 +97,7 @@ class JobDB:
             return []
         else:
             return [Job(
-                id_=job['id'],
+                id_=job['GUID'],
                 type_=job['attributes']['type'],
                 task=job['attributes']['task'],
                 command=job['attributes']['command'],
@@ -114,7 +114,7 @@ class JobDB:
         """
         data = {
             'class': 'Job',
-            'id': job.id,
+            'GUID': job.id,
             'attributes': {
                 'type': job.type,
                 'task': job.task,

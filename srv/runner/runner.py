@@ -209,7 +209,7 @@ class RunnerDB:
         """
         data = {
             'class': 'Runner',
-            'id': id_,
+            'GUID': id_,
             'attributes': {},
         }
         runners = self.db_client.send_request('list', json.dumps(data))[0][0]
@@ -221,7 +221,7 @@ class RunnerDB:
         else:
             runner = runners[0]
             return Runner(
-                id_=runner['id'],
+                id_=runner['GUID'],
                 status=runner['attributes']['status'],
                 command=runner['attributes']['command'],
                 type_=runner['attributes']['type'],
@@ -240,7 +240,7 @@ class RunnerDB:
         """
         data = {
             'class': 'Runner',
-            'id': runner.id,
+            'GUID': runner.id,
             'attributes': {
                 'status': runner.status.value,
                 'command': runner.command,
@@ -260,7 +260,7 @@ class RunnerDB:
 
         data = {
             'class': 'Runner',
-            'id': runner.id,
+            'GUID': runner.id,
             'attributes': {
                 'status': runner.status.value
             },
