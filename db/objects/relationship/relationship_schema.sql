@@ -1,6 +1,6 @@
 SELECT reclada_object.create_subclass('{
     "class": "RecladaObject",
-    "attrs": {
+    "attributes": {
         "newClass": "Relationship",
         "properties": {
             "subject": { "type": "string" },

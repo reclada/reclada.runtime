@@ -1,6 +1,6 @@
 SELECT reclada_object.create_subclass('{
     "class": "Task",
-    "attrs": {
+    "attributes": {
         "newClass": "Pipeline",
         "properties": {
             "triggers": {
