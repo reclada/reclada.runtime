@@ -1,6 +1,6 @@
-#s3_get_presigned_url AWS Lambda function 
+# s3_get_presigned_url AWS Lambda function 
 
-##Description
+## Description
 
 _s3_get_presigned_url_ AWS Lambda function provides generating of presigned URLs for files downloading from AWS S3 or uploading to AWS S3.
 
@@ -28,9 +28,9 @@ Event description to get presigned URL for uploading to S3:
 }
 ```
 
-##Installation
+## Installation
 
-- Upload the source code of the function. The source code is zipped in _s3_get_presigned_url.zip file and can be found in _installation_ folder.
+- Upload the source code of the function. The source code is zipped in _s3_get_presigned_url.zip_ file and can be found in _installation_ folder.
 - Attach the permissions to the function. For _Resource_ parameter use the S3 bucket ARN:
 ```
 {
