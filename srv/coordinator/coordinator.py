@@ -110,9 +110,9 @@ class Coordinator():
             # process found new jobs
             for job in self._jobs_to_process[0][0]:
                 # finding the type of the staging
-                type_of_staging = job["attrs"]["type"]
+                type_of_staging = job["attributes"]["type"]
                 type_of_staging = type_of_staging.strip()
-                self._log.info(f"New jobs found for resource {job['attrs']['type']}")
+                self._log.info(f"New jobs found for resource {job['attributes']['type']}")
                 # find in DB all runners for the specified platform with status DOWN
                 runners = self._db_runner.get_all(type_of_staging)
                 # if no stages of the specified type were found then
@@ -125,7 +125,7 @@ class Coordinator():
                     self._stages[type_of_staging] = Stage(type_of_staging, ref_stage, [])
                 # if runners found in DB then add them to the dictionary
                 if runners[0][0]:
-                    runners_found = [Runner(run["id"], 0, run["attrs"]["status"]) for run in runners[0][0]]
+                    runners_found = [Runner(run["GUID"], 0, run["attributes"]["status"]) for run in runners[0][0]]
                     self._stages[type_of_staging].runners.clear()
                     self._stages[type_of_staging].runners.extend(runners_found)
                     self._log.info(f"Found {len(runners_found)} runners")
@@ -155,12 +155,12 @@ class Coordinator():
 
                 # here we need to update reclada jobs with the runner id if runner exists
                 if runner:
-                    job["attrs"]["runner"] = runner.id
-                    job["attrs"]["status"] = "pending"
+                    job["attributes"]["runner"] = runner.id
+                    job["attributes"]["status"] = "pending"
                     self._db_jobs.save(job)
-                    self._log.info(f"The job with id {job['id']} was assigned to the runner {runner.id}")
+                    self._log.info(f"The job with id {job['GUID']} was assigned to the runner {runner.id}")
                 else:
-                    job["attrs"]["status"] = "failed"
+                    job["attributes"]["status"] = "failed"
                     self._db_jobs.save(job)
                     self._log.info(f"No runners were found for resource {type_of_staging}")
 
@@ -183,8 +183,8 @@ class Coordinator():
             This method saves the status of the runner in DB and changes the status of the runner
             to "up"
         """
-        runner_to_save = [run for run in runners[0][0] if run["id"] == runner.id]
-        runner_to_save[0]["attrs"]["status"] = "up"
+        runner_to_save = [run for run in runners[0][0] if run["GUID"] == runner.id]
+        runner_to_save[0]["attributes"]["status"] = "up"
         self._db_runner.save(runner_to_save)
 
     def find_runner_minimum_jobs(self, type_of_staging, jobs_pending):
@@ -197,7 +197,7 @@ class Coordinator():
         # from jobs found in DB determine runner id for
         # the minimum jobs were assigned
         if jobs_pending[0][0]:
-            jobs_for_runner = [job["attrs"]["runner"] for job in jobs_pending[0][0]]
+            jobs_for_runner = [job["attributes"]["runner"] for job in jobs_pending[0][0]]
             jobs_count = Counter(jobs_for_runner)
             jobs_count = jobs_count.most_common()
             runner = [ runner for runner in self._stages[type_of_staging].runners if runner.id == jobs_count[-1][0]]
@@ -226,17 +226,17 @@ class Coordinator():
         runners = self._db_runner.get_all()
         if runners[0][0]:
             for runner in runners[0][0]:
-                last_update = runner.get("attrs").get("last_update", None)
-                if last_update and runner["attrs"]["status"] == RunnerState.IDLE.value:
+                last_update = runner.get("attributes").get("last_update", None)
+                if last_update and runner["attributes"]["status"] == RunnerState.IDLE.value:
                     # converting last_update datetime to time format
                     last_time = time.strptime(last_update, "%Y/%m/%d %H:%M:%S")
                     last_time = time.mktime(last_time)
 
                     # if the difference between last_update time and current time more than 5 minutes
                     # then we need to changes status of the runner to Down
-                    if runner["attrs"]["status"] == RunnerState.IDLE.value and time.time() - last_time > 300:
-                        runner["attrs"]["status"] = RunnerState.DOWN.value
-                        self._log.info(f"The state of runner {runner['id']} was restored to DOWN.")
+                    if runner["attributes"]["status"] == RunnerState.IDLE.value and time.time() - last_time > 300:
+                        runner["attributes"]["status"] = RunnerState.DOWN.value
+                        self._log.info(f"The state of runner {runner['GUID']} was restored to DOWN.")
                         self._db_runner.save([runner])
 
 
@@ -257,7 +257,7 @@ class RunnerDB():
         try:
             # forming json structure for searching runner that is not running now
             if type_staging:
-                select_json = {'class': 'Runner', 'attrs': {'type': type_staging}}
+                select_json = {'class': 'Runner', 'attributes': {'type': type_staging}}
             else:
                 select_json = {'class': 'Runner'}
 
@@ -297,7 +297,7 @@ class JobDB():
         """
         try:
             # creating json structure for a query
-            jobs_new = {"class": "Job", "attrs": {"status": "new"}}
+            jobs_new = {"class": "Job", "attributes": {"status": "new"}}
             # sending request to DB to select all new jobs
             jobs_new = self._db_connection.send_request("list", json.dumps(jobs_new))
         except Exception as ex:
@@ -312,7 +312,7 @@ class JobDB():
         """
         try:
             # creating json structure for a query
-            jobs_pending = {"class": "Job", "attrs": {"status": "pending", "type": type_of_staging }}
+            jobs_pending = {"class": "Job", "attributes": {"status": "pending", "type": type_of_staging }}
             # sending request to DB to select all new jobs
             jobs_pending = self._db_connection.send_request("list", json.dumps(jobs_pending))
         except Exception as ex:

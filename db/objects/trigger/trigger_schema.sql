@@ -1,6 +1,6 @@
 SELECT reclada_object.create_subclass('{
     "class": "RecladaObject",
-    "attrs": {
+    "attributes": {
         "newClass": "Trigger",
         "properties": {
             "previousJobCode": {"type": "integer"},

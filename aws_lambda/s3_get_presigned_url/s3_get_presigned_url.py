@@ -55,9 +55,13 @@ def generate_presigned_post(event):
     if 'fileSize' not in event:
         return {'error': 'fileSize parameter must be present'}
 
+    bucket = event.get('bucketName') or os.getenv('DEFAULT_S3_BUCKET')
+    if not bucket:
+        return {'error': 'bucketName parameter or DEFAULT_S3_BUCKET environment variable must be present'}
+
     try:
         response = s3_client.generate_presigned_post(
-            Bucket=event.get('bucketName') or os.getenv('AWS_S3_BUCKET_NAME'),
+            Bucket=bucket,
             Key=os.path.join(
                 event.get('folderPath') or 'inbox/',
                 event['fileName'],
@@ -66,6 +70,7 @@ def generate_presigned_post(event):
                 'Content-Type': event['fileType'],
             },
             Conditions=[
+                {'Content-Type': event['fileType']},
                 ['content-length-range', 1, event['fileSize']],
             ],
             ExpiresIn=event.get('expiration') or 3600,

@@ -209,8 +209,8 @@ class RunnerDB:
         """
         data = {
             'class': 'Runner',
-            'id': id_,
-            'attrs': {},
+            'GUID': id_,
+            'attributes': {},
         }
         runners = self.db_client.send_request('list', json.dumps(data))[0][0]
 
@@ -221,12 +221,12 @@ class RunnerDB:
         else:
             runner = runners[0]
             return Runner(
-                id_=runner['id'],
-                status=runner['attrs']['status'],
-                command=runner['attrs']['command'],
-                type_=runner['attrs']['type'],
-                task=runner['attrs']['task'],
-                environment=runner['attrs']['environment'],
+                id_=runner['GUID'],
+                status=runner['attributes']['status'],
+                command=runner['attributes']['command'],
+                type_=runner['attributes']['type'],
+                task=runner['attributes']['task'],
+                environment=runner['attributes']['environment'],
                 runner_db=runner_db,
                 job_db=job_db,
                 s3=s3,
@@ -240,8 +240,8 @@ class RunnerDB:
         """
         data = {
             'class': 'Runner',
-            'id': runner.id,
-            'attrs': {
+            'GUID': runner.id,
+            'attributes': {
                 'status': runner.status.value,
                 'command': runner.command,
                 'type': runner.type,
@@ -260,8 +260,8 @@ class RunnerDB:
 
         data = {
             'class': 'Runner',
-            'id': runner.id,
-            'attrs': {
+            'GUID': runner.id,
+            'attributes': {
                 'status': runner.status.value
             },
         }
