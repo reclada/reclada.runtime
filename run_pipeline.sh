@@ -66,9 +66,9 @@ error_check "ERROR happened during copying results to the S3 bucket\n"
 printf "STEP 9 - End\n"
 
 # On some platform such as DOMINO we need to add an extra step in the pipeline.
-# The extra step supplied as 4th parameter and if it exists then
+# The extra step supplied as 5th parameter and if it exists then
 # we need to run it. If it doesn't then we skip this step
-if [[ -v _CUSTOM_TASK ]]
+if [ -n "$_CUSTOM_TASK" ]
 then
   printf "STEP 10 - Begin - Custom task\n"
   source "$_CUSTOM_TASK"
