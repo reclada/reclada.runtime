@@ -19,7 +19,7 @@ export _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
 
 export PYTHONPATH="${PYTHONPATH}:${BADGERDOC_REPO_PATH}"
 export PYTHONPATH="${PYTHONPATH}:${SCINLP_REPO_PATH}"
-export PYTHONPATH="${PYTHONPATH}:${BD2RECLADA_REPO_PATH}
+export PYTHONPATH="${PYTHONPATH}:${BD2RECLADA_REPO_PATH}"
 
 printf "STEP 1 - Begin - Parsing DB_URI environment variable\n"
 DB_URI_QUOTED=`python3 -c "import urllib.parse; parsed = urllib.parse.urlparse('$DB_URI'); print('$DB_URI'.replace(parsed.password, urllib.parse.quote(parsed.password)))"`
