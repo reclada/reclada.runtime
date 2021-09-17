@@ -32,6 +32,7 @@ TBD
 | POSTGRES_NOTIFY_CHANNEL | Notification channel name (`job_created`) |
 | RECLADA_REPO_PATH | Path where reclada runtime repo is mounted e.g. `/repos/reclada_reclada_runtime` |
 | SCINLP_REPO_PATH | Path where reclada SciNLP repo is mounted plus directory to SciNLP executable file e.g. `/repos/reclada_SciNLP/src/srv/lite` |
+| BD2RECLADA_REPO_PATH | Path where reclada SciNLP repo is mounted plus directory to bd2reclada executable file e.g. `/repos/reclada_SciNLP/src/srv/bd2reclada` |
 | BADGERDOC_REPO_PATH | Path where badgerdoc repo is mounted e.g. `/repos/badgerdoc_badgerdoc` |
 
 8. In project settings in `Results` tab select `To isolated branches` option.

@@ -44,5 +44,4 @@ ENV CASCADE_MODEL_PATH="/models/3_cls_w18_e30.pth"
 ENV PYTHONUNBUFFERED=1
 
 RUN pip install -r https://raw.githubusercontent.com/reclada/reclada.runtime/main/srv/requirements.txt
-RUN pip install 'git+https://github.com/reclada/SciNLP.git#egg=bd2reclada&subdirectory=src/srv/bd2reclada'
 RUN pip install pandas
