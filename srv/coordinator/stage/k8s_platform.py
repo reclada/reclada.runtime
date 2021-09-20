@@ -85,7 +85,7 @@ class K8s:
                             'command': command.split(),
                             'volumeMounts':[{
                                 'name': os.getenv('PV_NAME'),
-                                'mountPath': '/data'
+                                'mountPath': '/repos'
                             }, ],
                             'env': self.k8s_envs(),
                             'resources': {
