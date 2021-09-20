@@ -21,7 +21,7 @@ export PYTHONPATH="${PYTHONPATH}:${BADGERDOC_REPO_PATH}"
 export PYTHONPATH="${PYTHONPATH}:${SCINLP_REPO_PATH}"
 
 printf "STEP 0 - Begin - Installing bd2reclada\n"
-RUN pip install 'git+https://github.com/reclada/SciNLP.git#egg=bd2reclada&subdirectory=src/srv/bd2reclada'
+pip install 'git+https://github.com/reclada/SciNLP.git#egg=bd2reclada&subdirectory=src/srv/bd2reclada'
 printf "STEP 0 - End\n"
 
 printf "STEP 1 - Begin - Parsing DB_URI environment variable\n"
