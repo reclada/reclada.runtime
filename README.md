@@ -63,3 +63,16 @@ TBD
 ### Coordinator launch:
 
 1. Run the launcher created in item 13 of the deployment section. It will launch the coordinator.
+
+### Create runners in DB (optional):
+
+In some circumstances there are no available runners in DB. So you need to create them explicitly.
+
+1. In the project create a launcher to create runners in DB. For the command to run use:
+
+```bash
+<reclada_runtime_repo_mount_path>/srv/runner/create_runners.py --type=DOMINO --number=5
+```
+Number parameter is the number of runners to create in DB. Parameter is optional (default is 5).
+
+2. Run the launcher.
