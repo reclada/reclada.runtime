@@ -20,6 +20,10 @@ export _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
 export PYTHONPATH="${PYTHONPATH}:${BADGERDOC_REPO_PATH}"
 export PYTHONPATH="${PYTHONPATH}:${SCINLP_REPO_PATH}"
 
+printf "STEP 0 - Begin - Installing bd2reclada\n"
+pip install 'git+https://github.com/reclada/SciNLP.git#egg=bd2reclada&subdirectory=src/srv/bd2reclada'
+printf "STEP 0 - End\n"
+
 printf "STEP 1 - Begin - Parsing DB_URI environment variable\n"
 DB_URI_QUOTED=`python3 -c "import urllib.parse; parsed = urllib.parse.urlparse('$DB_URI'); print('$DB_URI'.replace(parsed.password, urllib.parse.quote(parsed.password)))"`
 S3_FILE_NAME=`python3 -c "print('$_S3_FILE_URI'.split('/')[-1])"`
@@ -36,7 +40,7 @@ error_check "ERROR happened during running badgerdoc\n"
 printf "STEP 3 - End\n"
 
 printf "STEP 4 - Begin - Copying the results of badgerdoc's work to the S3 bucket\n"
-aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive
+aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive --sse
 error_check "ERROR happened during copying results to the S3 bucket\n"
 printf "STEP 4 - End\n"
 
@@ -61,7 +65,7 @@ error_check "ERROR happened during loading data to DB\n"
 printf "STEP 8 - End\n"
 
 printf "STEP 9 - Begin - Copying result files to the S3 bucket\n"
-aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive
+aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive --sse
 error_check "ERROR happened during copying results to the S3 bucket\n"
 printf "STEP 9 - End\n"
 

@@ -1,3 +1,6 @@
+"""
+Creates reclada objects of class Runner in DB
+"""
 import argparse
 import json
 import os
@@ -32,7 +35,7 @@ def main():
 
         data = {
             'class': 'Runner',
-            'attrs': {
+            'attributes': {
                 'command': '',
                 'status': 'down',
                 'type': args.type,
