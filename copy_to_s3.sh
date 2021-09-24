@@ -42,7 +42,7 @@ for file_name in "$1"*; do
        # here we are coping a file to S3 bucket
        aws s3 cp """${file_name}""" "${S3_BUCKET}" --sse
   fi
-done;
+done
 
 
 
