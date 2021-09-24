@@ -13,17 +13,11 @@ TBD
 
 4. In project files connect [reclada runtime repository](https://github.com/reclada/reclada.runtime).
 
-5. In project files connect [artifactory repository](https://github.com/reclada/artifactory).
+5. In project files connect [SciNLP repository](https://github.com/reclada/SciNLP).
 
-6. In project files connect [deployments repository](https://github.com/reclada/deployments).
+6. In project files connect [badgerdoc repository](https://github.com/badgerdoc/badgerdoc).
 
-7. In project files connect [SciNLP repository](https://github.com/reclada/SciNLP).
-
-8. In project files connect [badgerdoc repository](https://github.com/badgerdoc/badgerdoc).
-
-9. In project files connect custom repository (if needed).
-
-10. In project settings fill environment variables according to table:
+7. In project settings fill environment variables according to table:
 
 | Variable | Description |
 | :------------- | :------------- |
@@ -32,47 +26,44 @@ TBD
 | AWS_DEFAULT_REGION | AWS credential |
 | AWS_REGION_NAME | AWS credential |
 | AWS_S3_BUCKET_NAME | S3 bucket name where to place results e.g. reclada-bucket. Files will be placed to `s3://reclada-bucket/output/<job_id>/` |
-| BADGERDOC_REPO_PATH | Path where badgerdoc repo is mounted e.g. `/repos/badgerdoc_badgerdoc` |
-| CUSTOM_REPO_PATH | Path where custom repo is mounted e.g. `/repos/custom` (if needed) |
-| CUSTOM_TASK | Path where custom task is located e.g. `/repos/custom/custom_task.sh` (if needed) |
 | DB_URI | Connection string in format `postgresql://user:password@host:port/database` |
 | DOMINO_PROJECT_TO_RUN | The name of current Domino project |
 | DOMINO_URL | Domino API URL e.g. `https://try.dominodatalab.com/v1/` |
-| ENVIRONMENT_NAME | Environment where the project is supposed to be run e.g. `DOMINO` |
-| LAMBDA_NAME | name of AWS Lambda function for generating presigned URLs e.g. `s3_get_presigned_url` |
-| POSTGRES_NOTIFY_CHANNEL | Notification channel name e.g. `job_created` |
+| POSTGRES_NOTIFY_CHANNEL | Notification channel name (`job_created`) |
 | RECLADA_REPO_PATH | Path where reclada runtime repo is mounted e.g. `/repos/reclada_reclada_runtime` |
 | SCINLP_REPO_PATH | Path where reclada SciNLP repo is mounted plus directory to SciNLP executable file e.g. `/repos/reclada_SciNLP/src/srv/lite` |
+| BADGERDOC_REPO_PATH | Path where badgerdoc repo is mounted e.g. `/repos/badgerdoc_badgerdoc` |
 
-11. In project settings in `Results` tab select `To isolated branches` option.
+8. In project settings in `Results` tab select `To isolated branches` option.
 
-12. In the project create a launcher for DB deploy. For the command to run use:
+9. In the project create a launcher to create runners in DB. For the command to run use:
 ```bash
-<deployments_repo_mount_path>/db/install.sh
+<reclada_runtime_repo_mount_path>/srv/runner/create_runners.py --type=DOMINO --number=5
 ```
+Number parameter is optional (default 5).
 
-13. In the project create a launcher for the coordinator. For the command to run use:
+10. In the project create a launcher for the coordinator. For the command to run use:
 ```bash
 <reclada_runtime_repo_mount_path>/run_coordinator.sh <reclada_runtime_repo_mount_path>
 ```
 
-### DB deploy:
-
-1. Run the launcher created in item 12 of the deployment section. It will deploy the database.
+11. In the project create a launcher to manually assign jobs to the runner. For the command to run use:
+```bash
+<reclada_runtime_repo_mount_path>/srv/runner/assign_jobs_to_runner.py --type=DOMINO --runner-id=<runner_id>
+```
+12. In the project create a launcher to manually launch badgerdoc runner. For the command to run use:
+```bash
+<reclada_runtime_repo_mount_path>/run_runner.sh <reclada_runtime_repo_mount_path> <runner_id>
+```
 
 ### Coordinator launch:
 
-1. Run the launcher created in item 13 of the deployment section. It will launch the coordinator.
+1. Run the launcher created in item 8 of deployment. It will create 5 runners in DB with status down. In normal conditions, it should be run once.
 
-### Create runners in DB (optional):
+2. Run the launcher created in item 9 of deployment. It will launch the coordinator.
 
-In some circumstances there are no available runners in DB. So you need to create them explicitly.
+3. If there are problems running coordinator: run the launcher created in item 10 of deployment. It will change all jobs with status new to status pending and assign them to the specified runner id. It won't run coordinator but allows to run runner manually.
 
-1. In the project create a launcher to create runners in DB. For the command to run use:
+### Badgerdoc runner launch:
 
-```bash
-<reclada_runtime_repo_mount_path>/srv/runner/create_runners.py --type=DOMINO --number=5
-```
-Number parameter is the number of runners to create in DB. Parameter is optional (default is 5).
-
-2. Run the launcher.
+1. In normal conditions, it’s not necessary to launch badgerdoc runner manually. But if you want to, run the launcher created in item 11 of deployment.
