@@ -36,7 +36,7 @@ error_check "ERROR happened during running badgerdoc\n"
 printf "STEP 3 - End\n"
 
 printf "STEP 4 - Begin - Copying the results of badgerdoc's work to the S3 bucket\n"
-aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive
+aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive --sse
 error_check "ERROR happened during copying results to the S3 bucket\n"
 printf "STEP 4 - End\n"
 
@@ -61,7 +61,7 @@ error_check "ERROR happened during loading data to DB\n"
 printf "STEP 8 - End\n"
 
 printf "STEP 9 - Begin - Copying result files to the S3 bucket\n"
-aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive
+aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive --sse
 error_check "ERROR happened during copying results to the S3 bucket\n"
 printf "STEP 9 - End\n"
 
