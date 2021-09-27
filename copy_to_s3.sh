@@ -3,10 +3,7 @@
 # If there is no parameter with the bucket name then AWS_S3_BUCKET_NAME environment variable is used as the bucket name.
 
 # The source folder needs to be specified as the first parameter of the script
-if [ -z "$1" ]
-  then
-    printf "The source folder needs to be specified.\n"
-fi
+SOURCE_FOLDER=${1:?"The source folder needs to be specified. $(exit 0)"}
 
 # The bucket name is supposed to be specified as the second parameter or
 # in the environment variable AWS_S3_BUCKET_NAME and we need to check if it is specified.

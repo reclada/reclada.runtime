@@ -93,10 +93,10 @@ class K8s:
                                 'name': os.getenv('PV_NAME'),
                                 'mountPath': '/repos'
                             },
-                                {
-                                    'name': os.getenv('PV2_NAME'),
-                                    'mountPath': '/mnt'
-                                }, ],
+                            {
+                                'name': os.getenv('PV2_NAME'),
+                                'mountPath': '/mnt'
+                            },],
                             'env': self.k8s_envs(),
                             'resources': {
                                 'limits': {
