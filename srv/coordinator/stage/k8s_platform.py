@@ -76,6 +76,12 @@ class K8s:
                                 'persistentVolumeClaim': {
                                     'claimName': os.getenv('PVC_NAME')
                                 }
+                            },
+                            {
+                                'name': os.getenv('PV2_NAME'),
+                                'persistentVolumeClaim': {
+                                    'claimName': os.getenv('PVC2_NAME')
+                                }
                             }
                         ],
                         'containers': [{
@@ -85,8 +91,12 @@ class K8s:
                             'command': command.split(),
                             'volumeMounts':[{
                                 'name': os.getenv('PV_NAME'),
-                                'mountPath': '/data'
-                            }, ],
+                                'mountPath': '/repos'
+                            },
+                            {
+                                'name': os.getenv('PV2_NAME'),
+                                'mountPath': '/mnt'
+                            },],
                             'env': self.k8s_envs(),
                             'resources': {
                                 'limits': {
