@@ -19,3 +19,4 @@ SELECT reclada_object.create_subclass('{
         "required": ["environment", "status"]
     }
 }'::jsonb);
+
