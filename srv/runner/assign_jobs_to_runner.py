@@ -29,7 +29,7 @@ def main():
     cursor = connection.cursor()
     data = {
         'class': 'Job',
-        'attrs': {
+        'attributes': {
             'type': args.type,
             'status': 'new',
         },
@@ -42,11 +42,11 @@ def main():
         data = {
             'class': 'Job',
             'id': job['id'],
-            'attrs': {
-                'type': job['attrs']['type'],
-                'task': job['attrs']['task'],
-                'command': job['attrs']['command'],
-                'input_parameters': job['attrs']['inputParameters'],
+            'attributes': {
+                'type': job['attributes']['type'],
+                'task': job['attributes']['task'],
+                'command': job['attributes']['command'],
+                'input_parameters': job['attributes']['inputParameters'],
                 'status': 'pending',
                 'runner': args.runner_id,
             },
