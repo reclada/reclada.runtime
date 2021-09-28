@@ -89,7 +89,7 @@ class K8s:
                             'image': self.image_repo,
                             'imagePullPolicy': 'Always',
                             'command': command.split(),
-                            'volumeMounts':[{
+                            'volumeMounts': [{
                                 'name': os.getenv('PV_NAME'),
                                 'mountPath': '/repos'
                             },
@@ -105,10 +105,11 @@ class K8s:
                                 },
                             },
                         }],
-                        
+
                     },
                 },
             },
         }
 
         Job(self._api, job).create()
+
