@@ -14,16 +14,19 @@ if [ -n "$2" ]
     S3_BUCKET="$2"
   elif [ -n "${AWS_S3_BUCKET_NAME}" ]
     then
+      S3_FOLDER="/${SOURCE_FOLDER#/*/}"
       if [ "${AWS_S3_BUCKET_NAME:0:5}" == "s3://" ]
       then
-        S3_BUCKET="${AWS_S3_BUCKET_NAME}"
+        S3_BUCKET="${AWS_S3_BUCKET_NAME%/}${S3_FOLDER}"
       else
-        S3_BUCKET="s3://""${AWS_S3_BUCKET_NAME}"
+        S3_BUCKET="s3://${AWS_S3_BUCKET_NAME%/}${S3_FOLDER}"
       fi
   else
       printf "The S3 bucket name is not specified.\n"
       exit 0
 fi
+
+printf "The name of the S3 bucket %s\n" $S3_BUCKET
 
 # Here we need to check if aws cli is installed
 aws --version 2> /dev/null
