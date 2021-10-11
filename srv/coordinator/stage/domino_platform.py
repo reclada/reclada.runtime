@@ -67,6 +67,7 @@ class Domino:
 
         if commit:
             data['commitId'] = commit
+        print(f'Json data for starting runner {data}')
         return self._request(f'projects/{user}/{project}/runs', 'POST', json=data).json()
 
 
