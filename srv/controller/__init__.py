@@ -1,0 +1,1 @@
+from srv.controller._version import __version__
