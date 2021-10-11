@@ -43,11 +43,13 @@ class Domino:
             headers = {
                 'X-Domino-Api-Key': self.api_key,
             }
+
+            print(f'Json before sending request {json} and data before sending {data} and params {params}')
             resp = self.session.request(
                 method,
                 path,
                 params=params, json=json, data=data,
-                headers=headers, stream=stream,
+                headers=headers, stream=stream
             )
             resp.raise_for_status()
             return resp
