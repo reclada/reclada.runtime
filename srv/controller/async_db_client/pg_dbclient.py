@@ -1,5 +1,5 @@
 from srv.db_client.dbclient import DBClient
-import psycopg2 as ps
+import aiopg as ps
 from srv.coordinator.resource import Resource
 
 class PgDBClient(DBClient):

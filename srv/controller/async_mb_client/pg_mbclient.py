@@ -5,11 +5,11 @@ import aiopg
 import asyncio
 from asyncio.queues import Queue
 
-from srv.mb_client.mbclient import MBClient
+from srv.controller.async_mb_client.mbclient import MBClient
 from srv.coordinator.resource import Resource
 
 
-class PgMBClient(MBClient):
+class AsyncPgMBClient(MBClient):
 
     def __init__(self, loop):
         self._queue_received = Queue()
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     q_mbclient_in = Queue()
     q_mbclient_out = Queue()
     loop=asyncio.get_event_loop()
-    p_mbclient = PgMBClient(loop)
+    p_mbclient = AsyncPgMBClient(loop)
     p_mbclient.set_credentials("MB", None)
     print(" [x] Awaiting requests")
 

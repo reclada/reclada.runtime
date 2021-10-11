@@ -11,7 +11,7 @@ import asyncio
 
 from srv.controller._version import __version__
 from srv.coordinator.stage.stage_factory import stage
-from srv.mb_client.mbclient_factory import mbclient
+from srv.controller.async_mb_client.mbclient_factory import mbclient
 from srv.db_client.dbclient_factory import dbclient
 import srv.logger.logger as log
 
@@ -20,8 +20,9 @@ class Controller():
     def __init__(self, platform, message_client, database_client, lg):
         self._log = lg
         self._stage = stage.get_stage(platform)
-        self._message_client = mbclient.get_client(message_client)
-        self._db_client = dbclient.get_client(database_client)
+        self._loop = asyncio.get_event_loop()
+        self._message_client = mbclient.get_client(message_client, self._loop)
+        self._db_client = dbclient.get_client(database_client, self._loop)
         self._queue = Queue()
         self._stages = {}
         self._database_type = database_client

@@ -1,7 +1,7 @@
-from srv.mb_client.pg_mbclient import PgMBClient
+from srv.controller.async_mb_client.pg_mbclient import AsyncPgMBClient
 
 
-class MBClientFactory:
+class AsyncMBClientFactory:
     """
         This class creates a client for the given type of Message Broker
     """
@@ -27,5 +27,5 @@ class MBClientFactory:
             raise ValueError(client_type)
         return stage()
 
-mbclient = MBClientFactory()
-mbclient.client_register('POSTGRESQL', PgMBClient)
+mbclient = AsyncMBClientFactory()
+mbclient.client_register('POSTGRESQL', AsyncPgMBClient)
