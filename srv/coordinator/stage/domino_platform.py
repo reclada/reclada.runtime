@@ -58,7 +58,7 @@ class Domino:
         data = {
             'isDirect': is_direct,
             'command': command,
-            'title': 'Runner',
+            'title': 'Runner'
         }
 
         # if the hardware tier is specified then we need to add it to the body of the request
