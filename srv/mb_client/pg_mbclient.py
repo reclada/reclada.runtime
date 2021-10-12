@@ -53,7 +53,7 @@ class PgMBClient(MBClient, Process):
                 # open the new connection
                 self._pgc.close()
                 self.open_db_connection()
-                nm.connections.update(self._pgc)
+                nm.connections.update([self._pgc,])
                 self._pgc.listen(self._channels)
                 continue
             # if a message arrived then
