@@ -39,7 +39,7 @@ class PgMBClient(MBClient, Process):
         # For now we have only one channel
         self._pgc.listen(self._channels)
         nm = NotificationManager(self._pgc)
-        nm.settimeout(600)
+        nm.settimeout(10)
         for message in nm:
             # if timeout happens then we don't need
             # to process the message
