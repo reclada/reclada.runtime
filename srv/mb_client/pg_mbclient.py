@@ -30,24 +30,29 @@ class PgMBClient(MBClient, Process):
         """
             This method gets called to start the loop of message handling
         """
-        # create connection to DB
-        self._pgc = postgresql.open( user=self._user,
-                                     password=self._password,
-                                     host=self._host,
-                                     port=5432,
-                                     database=self._database )
+
+        # open a DB connection
+        self.open_db_connection()
 
         # create the Notification Manager
         # to handle notifications from different channels
         # For now we have only one channel
         self._pgc.listen(self._channels)
         nm = NotificationManager(self._pgc)
-        nm.settimeout(10)
+        nm.settimeout(600)
         for message in nm:
             # if timeout happens then we don't need
             # to process the message
             if message is None:
+                # check for bad connections
+                if nm.garbage:
+                    nm.garbage.clear()
+                # handle the request
                 self.handle_request(0)
+                # open the new connection
+                self._pgc.close()
+                self.open_db_connection()
+                nm.connections.update(self._pgc)
                 self._pgc.listen(self._channels)
                 continue
             # if a message arrived then
@@ -59,6 +64,18 @@ class PgMBClient(MBClient, Process):
             for channel, payload, pid in notifies:
                 if channel == self._channels:
                     self.handle_request(payload)
+
+    def open_db_connection(self):
+        """
+            This method creates a DB connection
+        """
+        # create connection to DB
+        self._pgc = postgresql.open( user=self._user,
+                                     password=self._password,
+                                     host=self._host,
+                                     port=5432,
+                                     database=self._database )
+
 
     def set_credentials(self, type, json_file):
         """
