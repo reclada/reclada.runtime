@@ -44,6 +44,7 @@ class PgMBClient(MBClient, Process):
             # if timeout happens then we don't need
             # to process the message
             if message is None:
+                print(f'Handling an idle event')
                 # check for bad connections
                 if nm.garbage:
                     nm.garbage.clear()
