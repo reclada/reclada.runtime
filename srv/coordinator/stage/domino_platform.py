@@ -58,9 +58,10 @@ class Domino:
 
     def run(self, user, project, command, title='from api', commit='', hw_tier=None, is_direct=False):
         data = {
-            'isDirect': is_direct,
             'command': command,
-            'title': 'Runner'
+            'isDirect': is_direct,
+            'title': 'Runner',
+            'publishApiEndpoint': False,
         }
 
         # if the hardware tier is specified then we need to add it to the body of the request
