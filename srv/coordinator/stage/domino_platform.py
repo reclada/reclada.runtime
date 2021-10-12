@@ -22,7 +22,7 @@ class DominoPlatform(Stage):
 
         domino = Domino("andreylr/Coordinator", api_key=None, host=self.base_url)
 
-        domino_run = domino.runs_start(command, title="Runner")
+        domino_run = domino.runs_start(command, title=("Runner",))
         print(domino_run)
 
     def get_idle_runner(self, ref_to_stage):
