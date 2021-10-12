@@ -20,7 +20,7 @@ class DominoPlatform(Stage):
         self.api_key = os.getenv('DOMINO_USER_API_KEY')  # defines automatically
         self.base_url = os.getenv('DOMINO_URL') or 'https://try.dominodatalab.com/'  # defines manually
 
-        domino = Domino("marks/quick-start", api_key=None, host=self.base_url)
+        domino = Domino("andreylr/Coordinator", api_key=None, host=self.base_url)
 
         domino_run = domino.runs_start(command, title="Runner")
         print(domino_run)
