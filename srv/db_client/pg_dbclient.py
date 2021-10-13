@@ -50,6 +50,7 @@ class PgDBClient(DBClient):
                 self._db_instance = ps.connect(f'dbname={self._database}  user={self._user}\
                   password={self._password} host={self._host} connect_timeout=10')
                 self._db_instance.autocommit=True
+                break
             except Exception as ex:
                 try_number += 1
                 time.sleep(10)
