@@ -65,6 +65,8 @@ class Coordinator():
         while True:
             message = self._queue.get(block=True)
             if type(message) is int and int(message) == 0:
+                # check for new jobs in DB
+                self.process_reclada_message(0)
                 # we need to log this message only once
                 # so if the flag block_awaiting is not set to False
                 # then we log this message otherwise just skip it
