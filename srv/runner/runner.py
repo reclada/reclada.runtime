@@ -166,7 +166,7 @@ class Runner:
                 self._logger.info(f'Runner {self.id} is waiting for new jobs')
                 # update runner object in reclada DB with last_update
                 self._runner_db.save_runner(self)
-                time.sleep(10)
+                time.sleep(30)
 
             stop = time.time()
             if stop - start > 300:
