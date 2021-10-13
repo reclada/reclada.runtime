@@ -1,3 +1,5 @@
+import time
+
 from srv.db_client.dbclient import DBClient
 import psycopg2 as ps
 from srv.coordinator.resource import Resource
@@ -19,12 +21,18 @@ class PgDBClient(DBClient):
         :param body: a json object with parameters of the request
         """
 
-        self.connect()
-        with self._db_instance.cursor() as cursor:
-            cursor.callproc(f"reclada_object.{function_name}", [body,])
-            results = cursor.fetchall()
-            self._db_instance.commit()
-        self._db_instance.close()
+        # trying to establish the DB connection
+        # if it doesn't succeed then we exit application with an error code
+        # otherwise proceed with executing SQL procedure
+        if not self.connect():
+            with self._db_instance.cursor() as cursor:
+                cursor.callproc(f"reclada_object.{function_name}", [body,])
+                results = cursor.fetchall()
+                self._db_instance.commit()
+            self._db_instance.close()
+        else:
+            print(f"Connection to DB can't be established. Check DB's credentials and its availability.")
+            exit(1)
 
         return results
 
@@ -32,9 +40,23 @@ class PgDBClient(DBClient):
         """
             This method connects to DB
         """
-        self._db_instance = ps.connect(f'dbname={self._database}  user={self._user}\
-          password={self._password} host={self._host} connect_timeout=10')
-        self._db_instance.autocommit=True
+        # catch all kind of exceptions here and
+        # try reconnecting to DB five times with 10 seconds delay.
+        # If connection is established return 0
+        # otherwise return -1
+        try_number = 1
+        while try_number < 5:
+            try:
+                self._db_instance = ps.connect(f'dbname={self._database}  user={self._user}\
+                  password={self._password} host={self._host} connect_timeout=10')
+                self._db_instance.autocommit=True
+            except Exception as ex:
+                try_number += 1
+                time.sleep(10)
+                continue
+
+        ret_code = -1 if try_number >= 5 else 0
+        return ret_code
 
 
     def set_credentials(self, type, json_file):
