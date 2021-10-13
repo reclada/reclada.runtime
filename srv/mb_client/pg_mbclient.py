@@ -1,12 +1,8 @@
 from postgresql.notifyman import NotificationManager
 import postgresql
-import signal
 from multiprocessing import Process, Queue
 from srv.mb_client.mbclient import MBClient
 from srv.coordinator.resource import Resource
-
-SIGNALS_TO_HANDLE = [signal.SIGINT, signal.SIGTERM]
-
 
 class PgMBClient(MBClient, Process):
 
@@ -44,17 +40,16 @@ class PgMBClient(MBClient, Process):
             # if timeout happens then we don't need
             # to process the message
             if message is None:
-                print(f'Handling an idle event')
                 # check for bad connections
                 if nm.garbage:
                     nm.garbage.clear()
-                # handle the request
-                self.handle_request(0)
                 # open the new connection
                 self._pgc.close()
                 self.open_db_connection()
                 nm.connections.update([self._pgc,])
                 self._pgc.listen(self._channels)
+                # handle the request
+                self.handle_request(0)
                 continue
             # if a message arrived then
             # we need to check the name of
