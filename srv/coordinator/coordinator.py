@@ -31,7 +31,6 @@ class Coordinator():
         self._queue = Queue()
         self._stages = {}
         self._database_type = database_client
-        self._block_awaiting = False
 
     def start(self):
         """
@@ -70,13 +69,10 @@ class Coordinator():
                 # we need to log this message only once
                 # so if the flag block_awaiting is not set to False
                 # then we log this message otherwise just skip it
-                if not self._block_awaiting:
-                    self._log.info("Awaiting for notifications...")
-                    self._block_awaiting = True
+                self._log.info("Awaiting for notifications...")
             else:
                 self._log.info(f"A new notification was received.")
                 # return the flag block_awaiting to the initial state
-                self._block_awaiting = False
                 self.process_reclada_message(message)
 
         self._message_client.join()
@@ -359,7 +355,7 @@ def run(platform, database, messenger, verbose, version):
 
     lg.info(f"Coordinator v{__version__} started")
     # starting coordinator
-    coordinator = Coordinator(platform, database, messenger, lg)
+    coordinator = Coordinator(platform, messenger, database, lg)
     coordinator.start()
 
 
