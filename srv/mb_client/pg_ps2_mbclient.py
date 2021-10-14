@@ -35,7 +35,7 @@ class PgPs2MBClient(MBClient, Process):
 
         while try_number < 5:
             try:
-                if select.select([self._pgc], [], [], 10) == ([],[],[]):
+                if select.select([self._pgc], [], [], 600) == ([],[],[]):
                     self.handle_request(0)
                     continue
                 else:
