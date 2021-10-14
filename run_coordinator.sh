@@ -1,4 +1,4 @@
 #!/bin/bash
 
 cd "$1"
-python3 -m srv.coordinator.coordinator -platform DOMINO -database POSTGRESQL -messenger POSTGRESQL -verbose
+python3 -m srv.coordinator.coordinator -platform DOMINO -database POSTGRESQL -messenger POSTGRESQL_PS2 -verbose
