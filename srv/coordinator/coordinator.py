@@ -6,6 +6,9 @@ import json
 import click
 import time
 import logging
+import subprocess
+import os
+import sys
 
 from srv.coordinator._version import __version__
 from srv.coordinator.stage.stage_factory import stage
@@ -27,6 +30,7 @@ class Coordinator():
         self._log = lg
         self._stage = stage.get_stage(platform)
         self._message_client = mbclient.get_client(message_client)
+        self._message_client.set_log(self._log)
         self._db_client = dbclient.get_client(database_client)
         self._queue = Queue()
         self._stages = {}
@@ -40,22 +44,26 @@ class Coordinator():
         if self._message_client.set_credentials("MB", None):
             self._log.error("Not enough information for Message Broker Client.")
             return
+        self._log.debug('Credentials for Message Broker has been set.')
 
         # sets the queue to exchange messages between
         # broker and coordinator
         self._message_client.set_queue(self._queue)
         # sets credentials to DB's connection
         self._db_client.set_credentials("DB", None)
+        self._log.debug('Credentials for Database Client has been set.')
 
         self._db_runner = RunnerDB(self._db_client, self._log)
         self._db_jobs = JobDB(self._db_client, self._log)
 
         # before starting pooling we need to check DB
         # for new jobs
+        self._log.debug('Checking DB for new jobs and process them if it is needed.')
         self.process_reclada_message(None)
 
         # start the client to receive messages in a separate process
         try:
+            self._log.debug('Starts waiting for new notifications.')
             self._message_client.start()
         except Exception as ex:
             self._log.error(format(ex))
@@ -64,12 +72,20 @@ class Coordinator():
         while True:
             message = self._queue.get(block=True)
             if type(message) is int and int(message) == 0:
+                self._log.debug('Received an idle event.')
                 # check for new jobs in DB
                 self.process_reclada_message(0)
                 # we need to log this message only once
                 # so if the flag block_awaiting is not set to False
                 # then we log this message otherwise just skip it
                 self._log.info("Awaiting for notifications...")
+            elif type(message) is int and int(message) == 1:
+                # there is a problem with DB connection and
+                # application should be restarted
+                self._log.debug('Received a kill message and Coordinator is going to be restarted.')
+                self._log.debug(f'Current folder for starting Coordinator cwd={os.getenv("RECLADA_REPO_PATH")}')
+                subprocess.Popen("./run_coordinator.sh", cwd=os.getenv("RECLADA_REPO_PATH"), shell=True, executable='/bin/bash')
+                return
             else:
                 self._log.info(f"A new notification was received.")
                 # return the flag block_awaiting to the initial state
@@ -101,6 +117,7 @@ class Coordinator():
                 # since the multiple entries in the queue might be due
                 # to the fact that lambda function triggers on every file added
                 # to the S3 bucket.
+                self._log.debug('Cleaning the queue.')
                 while(not self._queue.empty()):
                     self._queue.get_nowait()
                 break

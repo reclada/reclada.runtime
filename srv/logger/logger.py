@@ -5,7 +5,7 @@ from logging.handlers import TimedRotatingFileHandler
 FORMATTER = logging.Formatter("%(asctime)s — %(funcName)s — %(levelname)s — %(message)s")
 CONSOLE_FORMATTER = logging.Formatter("[%(levelname)s]-%(asctime)s : %(message)s")
 
-def get_console_handler():
+def get_console_handler(level):
    """
        This function creates the logging handler for console output
    """
@@ -15,7 +15,7 @@ def get_console_handler():
    console_handler.setFormatter(CONSOLE_FORMATTER)
    # setting the type of the messages that gets logged
    # For console output only error messages appeares in the output
-   console_handler.setLevel(logging.INFO)
+   console_handler.setLevel(level)
    return console_handler
 
 
@@ -42,7 +42,7 @@ def get_logger(logger_name, level, file_name):
    # the input parameters
    logger.setLevel(level)
    # setting the logging to console
-   logger.addHandler(get_console_handler())
+   logger.addHandler(get_console_handler(level))
    # setting the logging to file
    logger.addHandler(get_file_handler(file_name))
    logger.propagate = False
