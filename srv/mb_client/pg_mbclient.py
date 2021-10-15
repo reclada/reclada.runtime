@@ -20,7 +20,7 @@ class PgMBClient(MBClient, Process):
         self._user = None
         self._password = None
         self._channels = None
-        self._timeout = 5
+        self._timeout = 300
         self._retry_number = 5
         self._log = None
 
