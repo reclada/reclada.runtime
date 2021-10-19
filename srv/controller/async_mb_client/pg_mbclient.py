@@ -6,14 +6,14 @@ import asyncio
 from asyncio.queues import Queue
 
 from srv.controller.async_mb_client.mbclient import MBClient
-from srv.coordinator.resource import Resource
+from srv.controller.resource import Resource
 
 
 class AsyncPgMBClient(MBClient):
 
     def __init__(self, loop):
-        self._queue_received = Queue()
-        self._queue_to_send = Queue()
+        self._queue_received = Queue(loop=loop, maxsize=1000)
+        self._queue_to_send = Queue(loop=loop, maxsize=1000)
         self._host = None
         self._database = None
         self._user = None
@@ -150,5 +150,6 @@ if __name__ == "__main__":
     p_mbclient.set_credentials("MB", None)
     print(" [x] Awaiting requests")
 
-    loop.run_until_complete(p_mbclient.run())
+    asyncio.ensure_future(p_mbclient.run())
+    loop.run_forever()
 

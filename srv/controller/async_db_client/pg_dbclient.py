@@ -1,8 +1,10 @@
-from srv.db_client.dbclient import DBClient
-import aiopg as ps
-from srv.coordinator.resource import Resource
+import asyncio
 
-class PgDBClient(DBClient):
+from srv.controller.async_db_client.dbclient import DBClient
+import aiopg as ps
+from srv.controller.resource import Resource
+
+class AsyncPgDBClient(DBClient):
 
     def __init__(self):
         self._host = None
@@ -10,31 +12,49 @@ class PgDBClient(DBClient):
         self._user = None
         self._password = None
         self._channels = None
-        self._db_instance = None
+        self._loop = asyncio.new_event_loop()
+        self._results = None
 
-    def send_request(self, function_name, body):
+    async def process_request(self, function_name, payload):
         """
             This method sends a request to call a store procedure in DB
-        :param function_name: a name of a store procedure to be called in DB
-        :param body: a json object with parameters of the request
+            The name of the store procedure and the payload comes from
+            the queue
         """
+        # create connection to DB
+        dsn = f"user={self._user} password={self._password} host={self._host} dbname={self._database}"
 
-        self.connect()
-        with self._db_instance.cursor() as cursor:
-            cursor.callproc(f"reclada_object.{function_name}", [body,])
-            results = cursor.fetchall()
-            self._db_instance.commit()
-        self._db_instance.close()
+        # create a pool of DB connections
+        async with ps.create_pool(dsn) as pool:
+            # create a connection for listening notification
+            async with pool.acquire() as db_connection:
+                cursor = db_connection.cursor()
+                await cursor.send("")
 
-        return results
+        await self.connect()
+        with await self._db_instance.cursor() as cursor:
+            await cursor.callproc(f"reclada_object.{function_name}", [payload,])
+            self._results = await cursor.fetchall()
+            await self._db_instance.commit()
+        await self._db_instance.close()
 
-    def connect(self):
+        return self._results
+
+    async def connect(self):
         """
             This method connects to DB
         """
-        self._db_instance = ps.connect(f'dbname={self._database}  user={self._user}\
-          password={self._password} host={self._host} connect_timeout=10')
+        self._db_instance = await ps.connect(f'dbname={self._database}  user={self._user}\
+          password={self._password} host={self._host}')
         self._db_instance.autocommit=True
+
+
+    async def send_request(self, function_name, payload):
+
+        send_task = self._loop.create_task(self.process_request(function_name, payload))
+        await send_task
+
+        return self._results
 
 
     def set_credentials(self, type, json_file):
@@ -53,11 +73,13 @@ class PgDBClient(DBClient):
 
 
 if __name__ == "__main__":
-    p_dbclient = PgDBClient()
+    p_dbclient = AsyncPgDBClient()
     p_dbclient.set_credentials("DB", "database.json")
-    p_dbclient.connect()
+    p_dbclient._loop.run_until_complete(p_dbclient.connect())
 
-    results = p_dbclient.send_request("list", '{"class":"jsonschema"}')
+    p_dbclient._loop.run_until_complete(p_dbclient.send_request("list", '{"class":"Runner"}'))
+
+    print(f"{p_dbclient._results}")
 
     results = p_dbclient.send_request("list",'{"class": "Job", "attributes": { "status" : "fail" }}')
     jobs_for_processing = results[0]
