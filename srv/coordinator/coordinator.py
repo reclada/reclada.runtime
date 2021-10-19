@@ -370,9 +370,9 @@ def run(platform, database, messenger, verbose, version):
     # if it was then create the logger for debugging otherwise
     # the logger would save only INFO messages
     if verbose:
-        lg = log.get_logger("coordinator", logging.DEBUG, "coordinator.log")
+        lg = log.get_logger("coordinator", logging.DEBUG, "/mnt/output/coordinator.log")
     else:
-        lg = log.get_logger('coordinator', logging.INFO, "coordinator.log")
+        lg = log.get_logger('coordinator', logging.INFO, "/mnt/output/coordinator.log")
 
     lg.info(f"Coordinator v{__version__} started")
     # starting coordinator
