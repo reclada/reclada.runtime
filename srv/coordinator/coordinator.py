@@ -181,7 +181,7 @@ class Coordinator():
                     job["attributes"]["status"] = "failed"
                     self._db_jobs.save(job)
                     self._log.info(f"No runners were found for resource {type_of_staging}")
-        self._log('Reclada messages have been processed.')
+        self._log.debug('Reclada messages have been processed.')
 
     def find_runner(self, type_of_staging):
         """
