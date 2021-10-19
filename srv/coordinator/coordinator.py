@@ -103,8 +103,10 @@ class Coordinator():
         # change statuses of runners with Idle state to
         # Down if last_update happened more than 5
         # minutes ago
+        self._log.debug(f'Reading Runners from DB.')
         self.pre_process_runners()
 
+        self._log.debug(f'Processing reclada messages.')
         # start the loop for job processing
         while True:
             # read new jobs from the database
@@ -120,6 +122,7 @@ class Coordinator():
                 self._log.debug('Cleaning the queue.')
                 while(not self._queue.empty()):
                     self._queue.get_nowait()
+                self._log.debug('The queue is empty.')
                 break
 
             # process found new jobs
@@ -178,6 +181,7 @@ class Coordinator():
                     job["attributes"]["status"] = "failed"
                     self._db_jobs.save(job)
                     self._log.info(f"No runners were found for resource {type_of_staging}")
+        self._log('Reclada messages have been processed.')
 
     def find_runner(self, type_of_staging):
         """

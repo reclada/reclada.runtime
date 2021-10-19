@@ -72,7 +72,7 @@ class PgMBClient(MBClient, Process):
             self.handle_request(1)
 
         # send a listen command to PostgreSQL server
-        self.log("Start listening notifications.")
+        self.log("Starts listening notifications.")
         self._pgc.listen(self._channels)
 
         # reading notification from the channel
@@ -90,7 +90,9 @@ class PgMBClient(MBClient, Process):
         while retry_number < self._retry_number:
             self.log("Creating Notification Manager.")
             nm = NotificationManager(self._pgc)
+            self.log("Notification Manages has been created.")
             nm.settimeout(self._timeout)
+            self.log("Timeout for Notification Manager has been set.")
             try:
                 # set on alarm for new notifications
                 self.log(f"Setting alarm for {self._timeout*2} sec.")
@@ -134,14 +136,17 @@ class PgMBClient(MBClient, Process):
                     db, notifies = message
                     for channel, payload, pid in notifies:
                         if channel == self._channels:
+                            self.log("Putting a message to the queue.")
                             self.handle_request(payload)
                     signal.alarm(self._timeout)
             except TimeOutException:
                 signal.alarm(0)
+                self.log(f"Notification Manager hangs. Trying to restore it. Retry number {retry_number}")
                 retry_number += 1
                 continue
-            except Exception:
+            except Exception as ex:
                 signal.alarm(0)
+                self.log(f'Exception happened in Notification Manager. {format(ex)}')
                 retry_number += 1
                 continue
 
@@ -163,11 +168,13 @@ class PgMBClient(MBClient, Process):
                 # takes too much time
                 signal.alarm(self._timeout*10)
                 # create connection to DB
+                self.log("Connecting to Message Broker.")
                 self._pgc = postgresql.open( user=self._user,
                                              password=self._password,
                                              host=self._host,
                                              port=5432,
                                              database=self._database )
+                self.log("Connected to Message Broker.")
 
                 s = socket.fromfd(self._pgc.fileno(), socket.AF_INET, socket.SOCK_STREAM)
                 # enable sending of keep-alive messages
@@ -179,10 +186,12 @@ class PgMBClient(MBClient, Process):
                 # the maximum number of keepalive probes should send before dropping the connection
                 s.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
                 s.setsockopt(socket.IPPROTO_TCP, socket.TCP_USER_TIMEOUT, 70000)
+                self.log("Additional configuration parameters were set.")
                 signal.alarm(0)
                 break
             except TimeOutException:
                 signal.alarm(0)
+                self.log(f"Retrying to establish connection to MB. Retry Number {retry_number}")
                 retry_number += 1
                 continue
             except Exception:
