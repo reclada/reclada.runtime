@@ -138,7 +138,7 @@ class PgMBClient(MBClient, Process):
                         if channel == self._channels:
                             self.log("Putting a message to the queue.")
                             self.handle_request(payload, False)
-                    signal.alarm(self._timeout)
+                    signal.alarm(self._timeout*2)
             except TimeOutException:
                 signal.alarm(0)
                 self.log(f"Notification Manager hangs. Trying to restore it. Retry number {retry_number}")
