@@ -20,7 +20,7 @@ class PgMBClient(MBClient, Process):
         self._user = None
         self._password = None
         self._channels = None
-        self._timeout = 10
+        self._timeout = 120
         self._retry_number = 5
         self._log = None
 
@@ -100,6 +100,8 @@ class PgMBClient(MBClient, Process):
                 for message in nm:
                     # set off alarm for new notifications
                     signal.alarm(0)
+                    # set the retry number to 1
+                    retry_number = 1
                     self.log("Gets an idle event. Alarm off.")
                     # if timeout happens then we don't need
                     # to process the message
