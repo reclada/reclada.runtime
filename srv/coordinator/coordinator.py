@@ -30,6 +30,7 @@ class Coordinator():
         self._log = lg
         self._stage = stage.get_stage(platform)
         self._message_client = mbclient.get_client(message_client)
+        self._message_client_name = message_client
         self._message_client.set_log(self._log)
         self._db_client = dbclient.get_client(database_client)
         self._queue = Queue()
@@ -86,6 +87,16 @@ class Coordinator():
                 self._log.debug(f'Current folder for starting Coordinator cwd={os.getenv("RECLADA_REPO_PATH")}')
                 subprocess.Popen("./run_coordinator.sh", cwd=os.getenv("RECLADA_REPO_PATH"), shell=True, executable='/bin/bash')
                 return
+            elif type(message) is int and int(message) == 2:
+                # there is a problem with the Notification Manager and
+                # MB client needs to be recreated
+                self._log.debug("Message Client needs to be recreated.")
+                self._message_client = mbclient.get_client(self._message_client_name)
+                self._log.debug("Setting up parameters for Message Client.")
+                self._message_client.set_credentials("MB", None)
+                self._message_client.set_queue(self._queue)
+                self._log.debug("Starting the Message Broker.")
+                self._message_client.start()
             else:
                 self._log.info(f"A new notification was received.")
                 # return the flag block_awaiting to the initial state
