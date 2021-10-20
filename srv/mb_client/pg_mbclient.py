@@ -31,12 +31,12 @@ class PgMBClient(MBClient, Process):
         if self._log :
             self._log.debug(message)
 
-    def handle_request(self, body):
+    def handle_request(self, body, block):
         """
             This method is called when a new message arrives
         :param body: message body
         """
-        self._queue.put(body)
+        self._queue.put(body,block=block)
 
     def _signal_handler_connection(self, signum, frame):
         """
@@ -69,7 +69,7 @@ class PgMBClient(MBClient, Process):
         # a kill message is put to the queue
         if self._open_db_connection():
             self.log("Can't establish connection to DB.")
-            self.handle_request(1)
+            self.handle_request(1, True)
 
         # send a listen command to PostgreSQL server
         self.log("Starts listening notifications.")
@@ -90,7 +90,7 @@ class PgMBClient(MBClient, Process):
         while retry_number < self._retry_number:
             self.log("Creating Notification Manager.")
             nm = NotificationManager(self._pgc)
-            self.log("Notification Manages has been created.")
+            self.log("Notification Manager has been created.")
             nm.settimeout(self._timeout)
             self.log("Timeout for Notification Manager has been set.")
             try:
@@ -125,7 +125,7 @@ class PgMBClient(MBClient, Process):
                         self.log("Starts listening for notifications.")
                         self._pgc.listen(self._channels)
                         # handle the request
-                        self.handle_request(0)
+                        self.handle_request(0, False)
                         continue
                     # if a message arrived then
                     # we need to check the name of
@@ -137,7 +137,7 @@ class PgMBClient(MBClient, Process):
                     for channel, payload, pid in notifies:
                         if channel == self._channels:
                             self.log("Putting a message to the queue.")
-                            self.handle_request(payload)
+                            self.handle_request(payload, False)
                     signal.alarm(self._timeout)
             except TimeOutException:
                 signal.alarm(0)
@@ -149,6 +149,17 @@ class PgMBClient(MBClient, Process):
                 self.log(f'Exception happened in Notification Manager. {format(ex)}')
                 retry_number += 1
                 continue
+
+            retry_number += 1
+            # It looks like we lost connection to DB and
+            # it needs to be recreated
+            self.log(f"The DB connection gets recreated {retry_number} time. ")
+            self._open_db_connection()
+
+        # Message Broker needs to be recreated.
+        self.log(f"The number of attempts have been exceed.")
+        self.log(f"The Message Client needs to be recreated.")
+        self.handle_request(2, True)
 
 
     def _open_db_connection(self):
