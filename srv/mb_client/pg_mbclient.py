@@ -70,6 +70,7 @@ class PgMBClient(MBClient, Process):
         if self._open_db_connection():
             self.log("Can't establish connection to DB.")
             self.handle_request(1, True)
+            return
 
         # send a listen command to PostgreSQL server
         self.log("Starts listening notifications.")
@@ -159,7 +160,7 @@ class PgMBClient(MBClient, Process):
             self._open_db_connection()
 
         # Message Broker needs to be recreated.
-        self.log(f"The number of attempts have been exceed.")
+        self.log(f"The number of attempts have been reached the limit.")
         self.log(f"The Message Client needs to be recreated.")
         self.handle_request(2, True)
 
@@ -207,8 +208,9 @@ class PgMBClient(MBClient, Process):
                 self.log(f"Retrying to establish connection to MB. Retry Number {retry_number}")
                 retry_number += 1
                 continue
-            except Exception:
-                print(f"Can't establish connection to DB.")
+            except Exception as ex:
+                self.log(f"Can't establish connection to DB.")
+                self.log((f"Exception: {format(ex)}"))
                 retry_number += 1
                 signal.alarm(0)
                 continue
