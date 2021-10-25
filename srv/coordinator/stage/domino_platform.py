@@ -17,10 +17,13 @@ class DominoPlatform(Stage):
         repo_path = os.getenv('RECLADA_REPO_PATH')  # defines manually
         command = [f'{repo_path}/run_runner.sh', repo_path, runner_id]
 
-        domino.run(
-            owner, project, command, hw_tier=hw_tier, is_direct=False,
-            title=f'{project}:{runner_id}',
-        )
+        response = domino.run(
+                        owner, project, command, hw_tier=hw_tier, is_direct=False,
+                        title=f'{project}:{runner_id}',
+                        )
+        # This method is supposed to return the runner id
+        print(f"Runner was created response: {response}")
+        return response
 
     def get_idle_runner(self, ref_to_stage):
         pass
