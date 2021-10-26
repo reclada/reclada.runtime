@@ -28,7 +28,13 @@ class DominoPlatform(Stage):
         pass
 
     def get_job_status(self, job_id):
-        pass
+        # create domino object for communicating with Domino API
+        domino = Domino()
+        # gets parameters from environments variable
+        owner = os.getenv('DOMINO_PROJECT_OWNER')  # defines automatically
+        project = os.getenv('DOMINO_PROJECT_TO_RUN')  # defines manually
+        # get the status of the specified job
+        return domino.get_job_status(owner, project, job_id)
 
 
 class Domino:
@@ -59,9 +65,14 @@ class Domino:
             raise DominoException from e
 
     def get_job_status(self, user, project, job_id):
-        pass
-
-
+        # get the status or exit code of the specified job
+        response = self._request(f'projects/{user}/{project}/runs/{job_id}',"GET").json()
+        # check response. If isCompleted is true then we need to get
+        # container exit code and return it otherwise the method should return 0
+        if response["isCompleted"] == True:
+            return response["containerExitCode"]
+        else:
+            return 0
 
     def run(self, user, project, command, title='from api', commit='', hw_tier=None, is_direct=False):
         data = {
