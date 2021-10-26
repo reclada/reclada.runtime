@@ -23,7 +23,7 @@ class DominoPlatform(Stage):
                         )
         # This method is supposed to return the runner id
         print(f"Runner was created response: {response}")
-        return response
+        return response["runId"]
 
     def get_idle_runner(self, ref_to_stage):
         pass

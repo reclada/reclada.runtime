@@ -168,6 +168,7 @@ class Coordinator():
                         runner = runners_down[0]
                         # create the runner of the platform
                         platform_runner_id = self._stage.create_runner(type_of_staging, runner.id, self._database_type)
+                        self._log.debug(f"Platform Runner Id {platform_runner_id}")
                         self._log.info(f"Runner with id {runner.id} was created.")
                         # updating the status for the runner to save it to DB
                         self.update_runner_status(runners, runner, platform_runner_id)
@@ -178,7 +179,7 @@ class Coordinator():
                         runner = self.find_runner_minimum_jobs(type_of_staging, jobs_pending)
                         self._log.debug(f"Trying to find runners with minimum jobs")
                 else:
-                    self.update_runner_status(runners, runner)
+                    self.update_runner_status(runners, runner, None)
                     self._log.debug(f"The status for runner {runner.id} was changed to 'up'")
 
                 # here we need to update reclada jobs with the runner id if runner exists
