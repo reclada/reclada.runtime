@@ -21,9 +21,7 @@ class DominoPlatform(Stage):
                         owner, project, command, hw_tier=hw_tier, is_direct=False,
                         title=f'{project}:{runner_id}',
                         )
-        # This method is supposed to return the runner id
-        print(f"Runner was created. Response: {response}")
-        print(f'Platform Runner Id {response["runId"]}')
+        # This method returns the platform runner id
         return response["runId"]
 
     def get_idle_runner(self, ref_to_stage):
@@ -37,6 +35,8 @@ class Domino:
     def __init__(self, api_key=None, base_url='https://try.dominodatalab.com/v1/', session=None):
         self.api_key = api_key or os.getenv('DOMINO_USER_API_KEY')  # defines automatically
         self.base_url = os.getenv('DOMINO_URL') or base_url  # defines manually
+        print (f'DOMINO_USER_API_KEY : {self.api_key}')
+        print ( f'DOMINO_URL : {self.base_url}')
         self.session = session or requests.Session()
 
     def _request(self, path, method, params=None, json=None, stream=False, data=None):
@@ -57,6 +57,11 @@ class Domino:
             return resp
         except requests.exceptions.RequestException as e:
             raise DominoException from e
+
+    def get_job_status(self, user, project, job_id):
+        pass
+
+
 
     def run(self, user, project, command, title='from api', commit='', hw_tier=None, is_direct=False):
         data = {
