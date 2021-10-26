@@ -29,6 +29,7 @@ class Coordinator():
     def __init__(self, platform, message_client, database_client, lg):
         self._log = lg
         self._stage = stage.get_stage(platform)
+        self._platform = platform
         self._message_client = mbclient.get_client(message_client)
         self._message_client_name = message_client
         self._message_client.set_log(self._log)
@@ -75,6 +76,7 @@ class Coordinator():
             if type(message) is int and int(message) == 0:
                 self._log.debug('Received an idle event.')
                 # check for new jobs in DB
+#                self.resurrect_runners()
                 self.process_reclada_message(0)
                 # we need to log this message only once
                 # so if the flag block_awaiting is not set to False
@@ -165,10 +167,10 @@ class Coordinator():
                         # select the first found runner which is in DOWN state
                         runner = runners_down[0]
                         # create the runner of the platform
-                        self._stage.create_runner(type_of_staging, runner.id, self._database_type)
+                        platform_runner_id = self._stage.create_runner(type_of_staging, runner.id, self._database_type)
                         self._log.info(f"Runner with id {runner.id} was created.")
                         # updating the status for the runner to save it to DB
-                        self.update_runner_status(runners, runner)
+                        self.update_runner_status(runners, runner, platform_runner_id)
                         self._log.debug(f"The status for runner {runner.id} was changed to 'up'")
                     else:
                         self._log.debug(f"No idle or down runners were found.")
@@ -205,14 +207,45 @@ class Coordinator():
         # if there are no idle or new runners then returns None
         return None
 
-    def update_runner_status(self, runners, runner):
+    def update_runner_status(self, runners, runner, platform_runner_id):
         """
             This method saves the status of the runner in DB and changes the status of the runner
             to "up"
         """
         runner_to_save = [run for run in runners[0][0] if run["GUID"] == runner.id]
         runner_to_save[0]["attributes"]["status"] = "up"
+        # TODO Save platform runner id in DB
         self._db_runner.save(runner_to_save)
+
+    def resurrect_runners(self):
+
+        # read all runners from DB
+        runners = self._db_runner.get_all(self._platform)
+
+        # select Runner that is UP
+        if runners[0][0]:
+            runners_up = [ runner for runner in runners[0][0] if runner["attributes"]["status"] == "up" ]
+            if runners_up:
+                for runner in runners_up:
+                    runner_platform_id = runner["RunnerPlatformId"]
+                    status = self._stage.get_job_status(runner_platform_id)
+                    # TODO Insert checking for Job status
+                    # if job for this runner is down on the platform
+                    # then we need to change the status of the runner
+                    # in DB and all jobs assigned to this Runner with status pending
+                    # should be failed.
+                    if status == "down":
+                        runner["attributes"]["status"] = "down"
+                        self._db_runner.save(runner)
+
+        # if Runner is up then:
+        # a. Get the status of the runner from the stage
+        # b. if Runner in DB is Up and stage gives the status for this runner as not running
+        #      a. All jobs assigned to this Runner and have statuses as running should be failed
+        #      b. The status of the Runner should be changed to down.
+        pass
+
+
 
     def find_runner_minimum_jobs(self, type_of_staging, jobs_pending):
         """
@@ -347,6 +380,41 @@ class JobDB():
             raise ex
         return jobs_pending
 
+    def get_pending_jobs_for_runner(self,type_of_staging, runner_id):
+        """
+            This method selects all pending and running jobs from DB
+            for the specified runner
+            runner_id: Id of runner for which jobs would be selected.
+            :return: the list of found jobs
+        """
+        found_jobs = []
+        try:
+            # creating json structures for a query
+            jobs_pending = {"class": "Job", "attributes": {"runner": runner_id,  "status": "pending", "type": type_of_staging }}
+            jobs_running = {"class": "Job", "attributes": {"runner": runner_id,  "status": "running", "type": type_of_staging }}
+
+            # send requests to DB to select Jons
+            jobs_pending = self._db_connection.send_request("list", json.dumps(jobs_pending))
+            jobs_running = self._db_connection.send_request("list", json.dumps(jobs_running))
+
+            # copy found jobs to the list with results
+            if jobs_pending[0][0]:
+                for job in jobs_pending[0][0]:
+                    found_jobs.append(job)
+            # copy found jobs to the list with results
+            if jobs_running[0][0]:
+                for job in jobs_running[0][0]:
+                    found_jobs.append(job)
+        # handle exceptions
+        except Exception as ex:
+            self._log.error(format(ex))
+            raise ex
+
+        return found_jobs
+
+
+
+
     def save(self, job):
         """
             This method saves the job object to DB
@@ -378,9 +446,9 @@ def run(platform, database, messenger, verbose, version):
     # if it was then create the logger for debugging otherwise
     # the logger would save only INFO messages
     if verbose:
-        lg = log.get_logger("coordinator", logging.DEBUG, "/mnt/output/coordinator.log")
+        lg = log.get_logger("coordinator", logging.DEBUG, "coordinator.log")
     else:
-        lg = log.get_logger('coordinator', logging.INFO, "/mnt/output/coordinator.log")
+        lg = log.get_logger('coordinator', logging.INFO, "coordinator.log")
 
     lg.info(f"Coordinator v{__version__} started")
     # starting coordinator
