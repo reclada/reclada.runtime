@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sshfs.fullname" . }}
+  labels:
+    {{- include "sshfs.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "sshfs.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "sshfs.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "sshfs.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          command: [ "/bin/sh"]
+          args: [ "-c", "mkdir -p /var/run/sshd; /usr/sbin/sshd -D" ]
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.sshfs.env }}
+          env:
+          {{- range $key, $val := .Values.sshfs.env }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+          {{- end }}
+          {{- end }}
+          volumeMounts:
+          - name: {{ .Values.sshfs.volume.PersistentVol }}
+            mountPath: /repos
+            readOnly: false
+          - name: {{ .Values.sshfs.volume2.PersistentVol }}
+            mountPath: /mnt
+            readOnly: false
+      volumes:
+      - name: {{ .Values.sshfs.volume.PersistentVol }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.sshfs.volume.pvcname }}
+      - name: {{ .Values.sshfs.volume2.PersistentVol }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.sshfs.volume2.pvcname }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
