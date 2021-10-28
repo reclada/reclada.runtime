@@ -6,6 +6,9 @@ import json
 import click
 import time
 import logging
+import subprocess
+import os
+import sys
 
 from srv.coordinator._version import __version__
 from srv.coordinator.stage.stage_factory import stage
@@ -27,11 +30,11 @@ class Coordinator():
         self._log = lg
         self._stage = stage.get_stage(platform)
         self._message_client = mbclient.get_client(message_client)
+        self._message_client.set_log(self._log)
         self._db_client = dbclient.get_client(database_client)
         self._queue = Queue()
         self._stages = {}
         self._database_type = database_client
-        self._block_awaiting = False
 
     def start(self):
         """
@@ -41,22 +44,26 @@ class Coordinator():
         if self._message_client.set_credentials("MB", None):
             self._log.error("Not enough information for Message Broker Client.")
             return
+        self._log.debug('Credentials for Message Broker has been set.')
 
         # sets the queue to exchange messages between
         # broker and coordinator
         self._message_client.set_queue(self._queue)
         # sets credentials to DB's connection
         self._db_client.set_credentials("DB", None)
+        self._log.debug('Credentials for Database Client has been set.')
 
         self._db_runner = RunnerDB(self._db_client, self._log)
         self._db_jobs = JobDB(self._db_client, self._log)
 
         # before starting pooling we need to check DB
         # for new jobs
+        self._log.debug('Checking DB for new jobs and process them if it is needed.')
         self.process_reclada_message(None)
 
         # start the client to receive messages in a separate process
         try:
+            self._log.debug('Starts waiting for new notifications.')
             self._message_client.start()
         except Exception as ex:
             self._log.error(format(ex))
@@ -65,18 +72,23 @@ class Coordinator():
         while True:
             message = self._queue.get(block=True)
             if type(message) is int and int(message) == 0:
+                self._log.debug('Received an idle event.')
                 # check for new jobs in DB
                 self.process_reclada_message(0)
                 # we need to log this message only once
                 # so if the flag block_awaiting is not set to False
                 # then we log this message otherwise just skip it
-                if not self._block_awaiting:
-                    self._log.info("Awaiting for notifications...")
-                    self._block_awaiting = True
+                self._log.info("Awaiting for notifications...")
+            elif type(message) is int and int(message) == 1:
+                # there is a problem with DB connection and
+                # application should be restarted
+                self._log.debug('Received a kill message and Coordinator is going to be restarted.')
+                self._log.debug(f'Current folder for starting Coordinator cwd={os.getenv("RECLADA_REPO_PATH")}')
+                subprocess.Popen("./run_coordinator.sh", cwd=os.getenv("RECLADA_REPO_PATH"), shell=True, executable='/bin/bash')
+                return
             else:
                 self._log.info(f"A new notification was received.")
                 # return the flag block_awaiting to the initial state
-                self._block_awaiting = False
                 self.process_reclada_message(message)
 
         self._message_client.join()
@@ -91,8 +103,10 @@ class Coordinator():
         # change statuses of runners with Idle state to
         # Down if last_update happened more than 5
         # minutes ago
+        self._log.debug(f'Reading Runners from DB.')
         self.pre_process_runners()
 
+        self._log.debug(f'Processing reclada messages.')
         # start the loop for job processing
         while True:
             # read new jobs from the database
@@ -105,8 +119,10 @@ class Coordinator():
                 # since the multiple entries in the queue might be due
                 # to the fact that lambda function triggers on every file added
                 # to the S3 bucket.
+                self._log.debug('Cleaning the queue.')
                 while(not self._queue.empty()):
                     self._queue.get_nowait()
+                self._log.debug('The queue is empty.')
                 break
 
             # process found new jobs
@@ -165,6 +181,7 @@ class Coordinator():
                     job["attributes"]["status"] = "failed"
                     self._db_jobs.save(job)
                     self._log.info(f"No runners were found for resource {type_of_staging}")
+        self._log.debug('Reclada messages have been processed.')
 
     def find_runner(self, type_of_staging):
         """
@@ -353,13 +370,13 @@ def run(platform, database, messenger, verbose, version):
     # if it was then create the logger for debugging otherwise
     # the logger would save only INFO messages
     if verbose:
-        lg = log.get_logger("coordinator", logging.DEBUG, "coordinator.log")
+        lg = log.get_logger("coordinator", logging.DEBUG, "/mnt/output/coordinator.log")
     else:
-        lg = log.get_logger('coordinator', logging.INFO, "coordinator.log")
+        lg = log.get_logger('coordinator', logging.INFO, "/mnt/output/coordinator.log")
 
     lg.info(f"Coordinator v{__version__} started")
     # starting coordinator
-    coordinator = Coordinator(platform, database, messenger, lg)
+    coordinator = Coordinator(platform, messenger, database, lg)
     coordinator.start()
 
 

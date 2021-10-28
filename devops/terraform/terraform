@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+TF_VERSION="1.0.7"
+TF_DIR="${HOME}/.terraform_dists/${TF_VERSION}"
+
+# check prerequisites first
+for bin in curl unzip; do
+  which ${bin} 1>/dev/null 2>/dev/null || {
+    echo "${bin} binary was not found, please install it first"
+    exit 1
+  }
+done
+
+if [ -f "${TF_DIR}/terraform" ]; then
+  # terraform is installed already
+  # launch and pass arguments
+  ${TF_DIR}/terraform $@
+else
+  # choose dist
+  echo "terraform ${TF_VERSION} was not found"
+  mkdir -p ${TF_DIR}
+  if [[ "${OSTYPE}" =~ "darwin" ]]; then
+    TF_URL="https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_darwin_amd64.zip"
+  elif [[ "${OSTYPE}" =~ "linux" ]]; then
+    TF_URL="https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
+  else
+    echo "${OSTYPE} is unsupported at the moment"
+    exit 1
+  fi
+  # download
+  echo "downloading from ${TF_URL}"
+  curl -s ${TF_URL} --output ${TF_DIR}/$(basename ${TF_URL})
+  echo "extracting into ${TF_DIR}"
+  unzip -q ${TF_DIR}/$(basename ${TF_URL}) -d ${TF_DIR}
+  # now we can safely launch it
+  ${TF_DIR}/terraform $@
+fi

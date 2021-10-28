@@ -1,4 +1,5 @@
 from srv.mb_client.pg_mbclient import PgMBClient
+from srv.mb_client.pg_ps2_mbclient import PgPs2MBClient
 
 
 class MBClientFactory:
@@ -29,3 +30,4 @@ class MBClientFactory:
 
 mbclient = MBClientFactory()
 mbclient.client_register('POSTGRESQL', PgMBClient)
+mbclient.client_register('POSTGRESQL_PS2', PgPs2MBClient)

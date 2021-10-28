@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "coordinator.serviceAccountName" . }}
+  labels:
+    {{- include "coordinator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "coordinator.serviceAccountName" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "coordinator.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
