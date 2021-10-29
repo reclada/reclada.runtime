@@ -83,19 +83,16 @@ class Coordinator():
             elif type(message) is int and int(message) == 1:
                 # there is a problem with DB connection and
                 # application should be restarted
-                self._log.debug('Received a kill message and Coordinator is going to be restarted.')
-                self._log.debug(f'Current folder for starting Coordinator cwd={os.getenv("RECLADA_REPO_PATH")}')
-                subprocess.Popen("./run_coordinator.sh", cwd=os.getenv("RECLADA_REPO_PATH"), shell=True, executable='/bin/bash')
+                self._log.debug('Received a kill message and Coordinator will be stopped.')
                 return
             elif type(message) is int and int(message) == 2:
                 # there is a problem with the Notification Manager and
                 # MB client needs to be recreated
-                self._log.debug("Message Client needs to be recreated.")
                 self._message_client = mbclient.get_client(self._message_client_name)
-                self._log.debug("Setting up parameters for Message Client.")
+                self._log.debug("Setting up parameters for the Message Client.")
                 self._message_client.set_credentials("MB", None)
                 self._message_client.set_queue(self._queue)
-                self._log.debug("Starting the Message Broker.")
+                self._log.debug("Starting the Message Client.")
                 self._message_client.start()
             else:
                 self._log.info(f"A new notification was received.")
@@ -381,14 +378,15 @@ def run(platform, database, messenger, verbose, version):
     # if it was then create the logger for debugging otherwise
     # the logger would save only INFO messages
     if verbose:
-        lg = log.get_logger("coordinator", logging.DEBUG, "/mnt/output/coordinator.log")
+        lg = log.get_logger("coordinator", logging.DEBUG, "coordinator.log")
     else:
-        lg = log.get_logger('coordinator', logging.INFO, "/mnt/output/coordinator.log")
+        lg = log.get_logger('coordinator', logging.INFO, "coordinator.log")
 
     lg.info(f"Coordinator v{__version__} started")
     # starting coordinator
     coordinator = Coordinator(platform, messenger, database, lg)
     coordinator.start()
+    lg.info("Coordinator has been stopped.")
 
 
 if __name__ == "__main__":

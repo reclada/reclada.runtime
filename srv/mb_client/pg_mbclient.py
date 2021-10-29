@@ -20,7 +20,7 @@ class PgMBClient(MBClient, Process):
         self._user = None
         self._password = None
         self._channels = None
-        self._timeout = 300
+        self._timeout = 120
         self._retry_number = 5
         self._log = None
 
@@ -70,6 +70,7 @@ class PgMBClient(MBClient, Process):
         if self._open_db_connection():
             self.log("Can't establish connection to DB.")
             self.handle_request(1, True)
+            return
 
         # send a listen command to PostgreSQL server
         self.log("Starts listening notifications.")
@@ -100,6 +101,8 @@ class PgMBClient(MBClient, Process):
                 for message in nm:
                     # set off alarm for new notifications
                     signal.alarm(0)
+                    # set the retry number to 1
+                    retry_number = 1
                     self.log("Gets an idle event. Alarm off.")
                     # if timeout happens then we don't need
                     # to process the message
@@ -138,7 +141,7 @@ class PgMBClient(MBClient, Process):
                         if channel == self._channels:
                             self.log("Putting a message to the queue.")
                             self.handle_request(payload, False)
-                    signal.alarm(self._timeout)
+                    signal.alarm(self._timeout*2)
             except TimeOutException:
                 signal.alarm(0)
                 self.log(f"Notification Manager hangs. Trying to restore it. Retry number {retry_number}")
@@ -150,18 +153,16 @@ class PgMBClient(MBClient, Process):
                 retry_number += 1
                 continue
 
-            if retry_number < self._retry_number:
-                retry_number += 1
-                # It looks like we lost connection to DB and
-                # it needs to be recreated
-                self.log(f"The DB connection gets recreated {retry_number} time. ")
-                self._open_db_connection()
-            else:
-                # Message Broker needs to be recreated.
-                self.log(f"The number of attempts have been exceed.")
-                self.log(f"The Message Client needs to be recreated.")
-                self.handle_request(2, True)
-                break
+            retry_number += 1
+            # It looks like we lost connection to DB and
+            # it needs to be recreated
+            self.log(f"The DB connection gets recreated {retry_number} time. ")
+            self._open_db_connection()
+
+        # Message Broker needs to be recreated.
+        self.log(f"The number of attempts have been reached the limit.")
+        self.log(f"The Message Client needs to be recreated.")
+        self.handle_request(2, True)
 
 
     def _open_db_connection(self):
@@ -207,8 +208,9 @@ class PgMBClient(MBClient, Process):
                 self.log(f"Retrying to establish connection to MB. Retry Number {retry_number}")
                 retry_number += 1
                 continue
-            except Exception:
-                print(f"Can't establish connection to DB.")
+            except Exception as ex:
+                self.log(f"Can't establish connection to DB.")
+                self.log((f"Exception: {format(ex)}"))
                 retry_number += 1
                 signal.alarm(0)
                 continue
