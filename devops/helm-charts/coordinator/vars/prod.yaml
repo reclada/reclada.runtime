@@ -1,0 +1,102 @@
+# Default values for reclada.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+coordinator:
+  env:
+    POSTGRES_NOTIFY_CHANNEL: job_created
+    AWS_ACCESS_KEY_ID: AKIAYR43YYFMA2V6T7VQ
+    AWS_SECRET_ACCESS_KEY: O+RkNZOEN5iKTnHcoymmJJqyekjKF5a3bsNt3mlG
+    AWS_REGION_NAME: eu-west-1
+    AWS_DEFAULT_REGION: eu-west-1
+    AWS_S3_BUCKET_NAME: prod-reclada-bucket
+    CUSTOM_TASK: "/repos/eln-parser/custom_task.sh"
+    CLIENT_USER: reclada
+    CLIENT_URL: "http://postgrest/api/rpc/hello_world"
+    CUSTOM_REPO_PATH: "/repos/eln-parser"
+    CLIENT_PASSWORD: 'fesge%46sfdf'
+    DB_URI: "postgresql://reclada:fesge%46sfdf@prod-reclada-k8s.c9lpgtggzz0d.eu-west-1.rds.amazonaws.com:5432/prod_reclada_k8s"
+    #PV name for badgerdock k8s jobs
+    K8S_IMAGE_REPO: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/badgerdoc:empty0.4
+    PVC_NAME: "prod"
+    PV_NAME: "prod-storage"
+    PVC2_NAME: "prod-2"
+    PV2_NAME: "prod-2-storage"
+    BADGERDOC_REPO_PATH: "/repos/badgerdoc"
+    SCINLP_REPO_PATH: "/repos/SciNLP"
+    PYTHONPATH: "/repos/badgerdoc/:/repos/SciNLP/src/srv:/repos/SciNLP/src/srv/lite:/repos/SciNLP/src/srv/bd2reclada/:/repos/reclada-runtime/"
+    RECLADA_REPO_PATH: "/repos/reclada-runtime"
+    
+  volume:
+    size: 1Gi
+    pvcname: "prod"
+    PersistentVol: "prod-storage"
+
+  volume2:
+    size: 1Gi
+    pvcname: "prod-2"
+    PersistentVol: "prod-2-storage"
+  
+  initializer:
+    image: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/coordinator-init:0.1
+
+replicaCount: 1
+
+image:
+  repository: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/coordinator
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: "coordinator"
+fullnameOverride: "coordinator"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "coordinator"
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+
+
+ingress:
+  enabled: false
+
+
+resources: 
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
