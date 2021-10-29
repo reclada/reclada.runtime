@@ -1,5 +1,6 @@
 import os
 
+import pykube
 from pykube import HTTPClient, KubeConfig, Job
 
 from srv.coordinator.stage.stage import Stage
@@ -12,6 +13,9 @@ K8S_ENV_KEYS = [
 
 
 class K8sPlatform(Stage):
+    def __init__(self):
+        self._k8s = None
+
     def create_stage(self, type_of_stage):
         pass
 
@@ -20,7 +24,7 @@ class K8sPlatform(Stage):
 
     def create_runner(self, ref_to_stage, runner_id, db_type):
         image = 'badgerdoc'
-        k8s = K8s(image)
+        self._k8s = K8s(image)
 
         command = f'python3 -m srv.runner.runner --runner-id={runner_id} --db-client={db_type}'
         labels = {
@@ -29,14 +33,17 @@ class K8sPlatform(Stage):
             'db-client': db_type,
         }
 
-        k8s.run(command, labels)
+        return self._k8s.run(command, labels)
 
     def get_idle_runner(self, ref_to_stage):
         pass
 
     def get_job_status(self, job_id):
-        pass
-
+        api = HTTPClient(KubeConfig.from_service_account())
+        namespace, name = job_id.split(":")
+        print(f'Namespace : {namespace}  Name: {name}')
+        for k8s_job in pykube.Job.objects(api, namespace=namespace):
+            print(f'K8S obj :{k8s_job.obj}')
 
 class K8s:
     def __init__(self, image):
@@ -111,5 +118,7 @@ class K8s:
             },
         }
 
-        Job(self._api, job).create()
+        job_k8s = Job(self._api, job)
+        job_k8s.create()
+        return f'{job_k8s.obj["metadata"]["namespace"]}:{job_k8s.obj["metadata"]["name"]}'
 

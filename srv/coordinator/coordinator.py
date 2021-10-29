@@ -58,6 +58,11 @@ class Coordinator():
         self._db_runner = RunnerDB(self._db_client, self._log)
         self._db_jobs = JobDB(self._db_client, self._log)
 
+        # before start processing we need to resurrect runners
+        print("Resurrrect runners begin.")
+        self.resurrect_runners()
+        print("Resurrect runners end.")
+
         # before starting pooling we need to check DB
         # for new jobs
         self._log.debug('Checking DB for new jobs and process them if it is needed.')
@@ -119,8 +124,8 @@ class Coordinator():
         self._log.debug(f'Processing reclada messages.')
         # start the loop for job processing
         while True:
-            # read new jobs from the database
-            self._jobs_to_process = self._db_jobs.get_new()
+            # reading new jobs from the database for the specified platform
+            self._jobs_to_process = self._db_jobs.get_new(self._platform)
             self._log.info(f"Reading new jobs from DB")
             # if no jobs were found then stop the loop
             if not self._jobs_to_process[0][0]:
@@ -215,7 +220,7 @@ class Coordinator():
         """
         runner_to_save = [run for run in runners[0][0] if run["GUID"] == runner.id]
         runner_to_save[0]["attributes"]["status"] = "up"
-        # TODO Save platform runner id in DB
+        runner_to_save[0]["attributes"]["platformRunnerID"] = platform_runner_id
         self._db_runner.save(runner_to_save)
 
     def resurrect_runners(self):
@@ -225,10 +230,17 @@ class Coordinator():
 
         # select Runner that is UP
         if runners[0][0]:
-            runners_up = [ runner for runner in runners[0][0] if runner["attributes"]["status"] == "up" ]
+            print("Runners found.")
+            runners_up = [ runner for runner in runners[0][0] if runner["attributes"]["status"] == "up" or
+                           runner["attributes"]["status"] == "idle" ]
             if runners_up:
+                print("Runners UP found.")
                 for runner in runners_up:
-                    runner_platform_id = runner["RunnerPlatformId"]
+                    print(f'Platform Runner Id : {runner.get("attributes").get("platformRunnerID", None)}')
+                    runner_platform_id = runner.get("attributes").get("platformRunnerID", None)
+                    # if the platform runner id is not set then skip the runner
+                    if not runner_platform_id:
+                        continue
                     status = self._stage.get_job_status(runner_platform_id)
                     # TODO Insert checking for Job status
                     # if job for this runner is down on the platform
@@ -244,8 +256,6 @@ class Coordinator():
         # b. if Runner in DB is Up and stage gives the status for this runner as not running
         #      a. All jobs assigned to this Runner and have statuses as running should be failed
         #      b. The status of the Runner should be changed to down.
-        pass
-
 
 
     def find_runner_minimum_jobs(self, type_of_staging, jobs_pending):
@@ -337,6 +347,7 @@ class RunnerDB():
         """
         try:
             # sending request to DB to create reclada runner object
+            print(f'Runner object : {runner[0]}')
             self._db_connection.send_request("update", json.dumps(runner[0]))
         except Exception as ex:
             self._log.error(format(ex))
@@ -351,14 +362,15 @@ class JobDB():
         self._db_connection = db_connection
         self._log = log
 
-    def get_new(self):
+    def get_new(self, type_staging):
         """
             This method selects all new job objects from DB
+            platform: the name of the platform for which jobs are going to be searched
         :return: the list of Job objects
         """
         try:
             # creating json structure for a query
-            jobs_new = {"class": "Job", "attributes": {"status": "new"}}
+            jobs_new = {"class": "Job", "type": type_staging, "attributes": {"status": "new"}}
             # sending request to DB to select all new jobs
             jobs_new = self._db_connection.send_request("list", json.dumps(jobs_new))
         except Exception as ex:
