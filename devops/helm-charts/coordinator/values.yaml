@@ -1,0 +1,86 @@
+# Default values for reclada.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+coordinator:
+  env:
+    DB_URI: 'postgresql://reclada:fesge%46sfdf@eks-infra-cluster.c9lpgtggzz0d.eu-west-1.rds.amazonaws.com:5432/reclada_demo_0624'
+    POSTGRES_NOTIFY_CHANNEL: job_created
+    AWS_ACCESS_KEY_ID: AKIAYR43YYFMA2V6T7VQ
+    AWS_SECRET_ACCESS_KEY: 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
+    AWS_REGION_NAME: eu-west-1
+    AWS_DEFAULT_REGION: eu-west-1
+    AWS_S3_BUCKET_NAME: dev-reclada-bucket
+    #K8S_IMAGE_REPO will be overwriten with helm cli via deploy process
+    #K8S_IMAGE_REPO: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/badgerdoc:latest
+    CUSTOM_TASK: "/repos/eln-parser//custom_task.sh"
+    CLIENT_USER: reclada
+    CLIENT_URL: "http://postgrest/api/rpc/hello_world"
+    CUSTOM_REPO_PATH: "/repos/eln-parser"
+    CLIENT_PASSWORD: 'fesge%46sfdf'
+
+
+replicaCount: 1
+
+image:
+  repository: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/coordinator
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: "coordinator"
+fullnameOverride: "coordinator"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "coordinator"
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+
+
+ingress:
+  enabled: false
+
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

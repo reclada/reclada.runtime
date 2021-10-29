@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "coordinator.fullname" . }}
+  labels:
+    {{- include "coordinator.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "coordinator.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "coordinator.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "coordinator.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: initializer
+          image: {{ .Values.coordinator.initializer.image }}
+          command: [ "/bin/sh", "-c" ]
+          args: [ "cd /mnt ; ls efs || mkdir efs ; ls ebs || mkdir ebs ; ls volatile || mkdir volatile ; ls /mnt/output/ || mkdir -p /mnt/output/" ]
+          volumeMounts:
+          - name: {{ .Values.coordinator.volume.PersistentVol }}
+            mountPath: /repos
+            readOnly: false
+          - name: {{ .Values.coordinator.volume2.PersistentVol }}
+            mountPath: /mnt
+            readOnly: false
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          command: [ "/bin/sh", "-c" ]
+          args: [ " cd /repos/reclada-runtime ; python3 -m srv.coordinator.coordinator -platform K8S -database POSTGRESQL -messenger POSTGRESQL -verbose" ]
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.coordinator.env }}
+          env:
+          {{- range $key, $val := .Values.coordinator.env }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+          {{- end }}
+          {{- end }}
+          volumeMounts:
+          - name: {{ .Values.coordinator.volume.PersistentVol }}
+            mountPath: /repos
+            readOnly: false
+          - name: {{ .Values.coordinator.volume2.PersistentVol }}
+            mountPath: /mnt
+            readOnly: false
+      volumes:
+      - name: {{ .Values.coordinator.volume.PersistentVol }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.coordinator.volume.pvcname }}
+      - name: {{ .Values.coordinator.volume2.PersistentVol }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.coordinator.volume2.pvcname }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -59,6 +59,27 @@ class PgMBClient(MBClient, Process):
         raise TimeOutException()
 
 
+    def _signal_handler_connection(self, signum, frame):
+        """
+            This method handles timeout of connection to DB
+            If timeout expires then the application should be restarted
+        """
+        self.log('There was a delay in establishing connection to DB')
+        raise TimeOutException()
+
+
+    def _signal_handler_listen(self, signum, frame):
+        """
+            This method handles timeout of listening notifications from DB
+            If timeout expires then the new connection to DB should be created
+        """
+        # open another DB connection
+        self.log('There was a delay in processing idle events. ')
+        self._open_db_connection()
+        self.log('The new DB connection was opened.')
+        raise TimeOutException()
+
+
     def run(self):
         """
             This method gets called to start the loop of message handling
