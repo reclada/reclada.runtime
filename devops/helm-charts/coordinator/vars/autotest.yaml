@@ -13,7 +13,7 @@ coordinator:
     AWS_S3_BUCKET_NAME: autotest-reclada-bucket
     #K8S_IMAGE_REPO will be overwriten with helm cli via deploy process
     K8S_IMAGE_REPO: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/badgerdoc:empty0.4
-    CUSTOM_TASK: "/repos/eln-parser/custom_task.sh"
+    # CUSTOM_TASK: "/repos/eln-parser/custom_task.sh"
     CLIENT_USER: reclada
     CLIENT_URL: "http://postgrest/api/rpc/hello_world"
     CUSTOM_REPO_PATH: "/repos/eln-parser"
