@@ -10,7 +10,7 @@ coordinator:
     AWS_REGION_NAME: eu-west-1
     AWS_DEFAULT_REGION: eu-west-1
     AWS_S3_BUCKET_NAME: prod-reclada-bucket
-    CUSTOM_TASK: "/repos/eln-parser/custom_task.sh"
+    # CUSTOM_TASK: "/repos/eln-parser/custom_task.sh"
     CLIENT_USER: reclada
     CLIENT_URL: "http://postgrest/api/rpc/hello_world"
     CUSTOM_REPO_PATH: "/repos/eln-parser"
