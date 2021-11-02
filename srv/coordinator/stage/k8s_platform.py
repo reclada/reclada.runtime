@@ -39,11 +39,27 @@ class K8sPlatform(Stage):
         pass
 
     def get_job_status(self, job_id):
+        """
+            This method check for existence of the specified job on the platform and
+            if the job is not active then it returns 1 otherwise it returns 0
+        """
         api = HTTPClient(KubeConfig.from_service_account())
+        # extract namespace and name from job_id
+        # this job_id is supposed to be created in K8S environment
         namespace, name = job_id.split(":")
-        print(f'Namespace : {namespace}  Name: {name}')
-        for k8s_job in pykube.Job.objects(api, namespace=namespace):
-            print(f'K8S obj :{k8s_job.obj}')
+        # find job by namespace and name
+        job = pykube.Job.objects(api).filter(namespace=namespace).get(name=name)
+        # Check the status of the job. If the job is still running then
+        # we consider it as a normal processing and return 0. If the job is finished
+        # by whatever reason we need to return 1. For us it doesn't matter the reason since
+        # we only check if this job is alive or not.
+        job_status  = job.obj["status"]
+        job_active = job_status.get("active", None)
+        if not job_active :
+            # if the job is not active then returns 1
+            return 1
+        return 0
+
 
 class K8s:
     def __init__(self, image):

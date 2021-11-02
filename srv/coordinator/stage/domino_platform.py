@@ -67,12 +67,11 @@ class Domino:
     def get_job_status(self, user, project, job_id):
         # get the status or exit code of the specified job
         response = self._request(f'projects/{user}/{project}/runs/{job_id}',"GET").json()
-        # check response. If isCompleted is true then we need to get
-        # container exit code and return it otherwise the method should return 0
+        # check response. If isCompleted is true then we need to return 1
+        # otherwise the method should return 0
         if response["isCompleted"] == True:
-            return response["containerExitCode"]
-        else:
-            return 0
+            return 1
+        return 0
 
     def run(self, user, project, command, title='from api', commit='', hw_tier=None, is_direct=False):
         data = {

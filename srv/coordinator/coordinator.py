@@ -17,7 +17,7 @@ from srv.db_client.dbclient_factory import dbclient
 import srv.logger.logger as log
 
 Stage = namedtuple("Stage", "type reference runners")
-Runner = namedtuple("Runner", "id number_of_jobs state")
+Runner = namedtuple("Runner", "id number_of_jobs state platformRunnerID")
 
 class RunnerState(Enum):
     BUSY = "up"
@@ -59,9 +59,7 @@ class Coordinator():
         self._db_jobs = JobDB(self._db_client, self._log)
 
         # before start processing we need to resurrect runners
-        print("Resurrrect runners begin.")
         self.resurrect_runners()
-        print("Resurrect runners end.")
 
         # before starting pooling we need to check DB
         # for new jobs
@@ -81,7 +79,7 @@ class Coordinator():
             if type(message) is int and int(message) == 0:
                 self._log.debug('Received an idle event.')
                 # check for new jobs in DB
-#                self.resurrect_runners()
+                self.resurrect_runners()
                 self.process_reclada_message(0)
                 # we need to log this message only once
                 # so if the flag block_awaiting is not set to False
@@ -158,7 +156,9 @@ class Coordinator():
                     self._stages[type_of_staging] = Stage(type_of_staging, ref_stage, [])
                 # if runners found in DB then add them to the dictionary
                 if runners[0][0]:
-                    runners_found = [Runner(run["GUID"], 0, run["attributes"]["status"]) for run in runners[0][0]]
+                    runners_found = [Runner(run["GUID"], 0,
+                                            run["attributes"]["status"],
+                                            run["attributes"]["platformRunnerID"]) for run in runners[0][0]]
                     self._stages[type_of_staging].runners.clear()
                     self._stages[type_of_staging].runners.extend(runners_found)
                     self._log.info(f"Found {len(runners_found)} runners")
@@ -184,7 +184,7 @@ class Coordinator():
                         runner = self.find_runner_minimum_jobs(type_of_staging, jobs_pending)
                         self._log.debug(f"Trying to find runners with minimum jobs")
                 else:
-                    self.update_runner_status(runners, runner, None)
+                    self.update_runner_status(runners, runner, runner.platformRunnerID)
                     self._log.debug(f"The status for runner {runner.id} was changed to 'up'")
 
                 # here we need to update reclada jobs with the runner id if runner exists
@@ -224,39 +224,36 @@ class Coordinator():
         self._db_runner.save(runner_to_save)
 
     def resurrect_runners(self):
-
+        self._log.info(f'Resurrecting runners.')
         # read all runners from DB
         runners = self._db_runner.get_all(self._platform)
-
         # select Runner that is UP
         if runners[0][0]:
-            print("Runners found.")
             runners_up = [ runner for runner in runners[0][0] if runner["attributes"]["status"] == "up" or
                            runner["attributes"]["status"] == "idle" ]
             if runners_up:
-                print("Runners UP found.")
                 for runner in runners_up:
-                    print(f'Platform Runner Id : {runner.get("attributes").get("platformRunnerID", None)}')
                     runner_platform_id = runner.get("attributes").get("platformRunnerID", None)
+                    runner_id = runner.get("GUID")
                     # if the platform runner id is not set then skip the runner
                     if not runner_platform_id:
                         continue
                     status = self._stage.get_job_status(runner_platform_id)
-                    # TODO Insert checking for Job status
                     # if job for this runner is down on the platform
                     # then we need to change the status of the runner
                     # in DB and all jobs assigned to this Runner with status pending
                     # should be failed.
-                    if status == "down":
+                    if status == 1:
+                        # find all jobs in running state for the specified runner
+                        jobs_for_runner = self._db_jobs.get_pending_jobs_for_runner(self._platform, runner_id)
+                        # if there are such jobs then set their status to failed
+                        if jobs_for_runner:
+                            for job in jobs_for_runner:
+                                job["attributes"]["status"] = "failed"
+                                self._db_jobs.save(job)
                         runner["attributes"]["status"] = "down"
-                        self._db_runner.save(runner)
-
-        # if Runner is up then:
-        # a. Get the status of the runner from the stage
-        # b. if Runner in DB is Up and stage gives the status for this runner as not running
-        #      a. All jobs assigned to this Runner and have statuses as running should be failed
-        #      b. The status of the Runner should be changed to down.
-
+                        self._db_runner.save([runner])
+                        self._log.info(f'Runner with id {runner_id} was resurrected.')
 
     def find_runner_minimum_jobs(self, type_of_staging, jobs_pending):
         """
@@ -347,7 +344,6 @@ class RunnerDB():
         """
         try:
             # sending request to DB to create reclada runner object
-            print(f'Runner object : {runner[0]}')
             self._db_connection.send_request("update", json.dumps(runner[0]))
         except Exception as ex:
             self._log.error(format(ex))
@@ -403,8 +399,16 @@ class JobDB():
         found_jobs = []
         try:
             # creating json structures for a query
-            jobs_pending = {"class": "Job", "attributes": {"runner": runner_id,  "status": "pending", "type": type_of_staging }}
-            jobs_running = {"class": "Job", "attributes": {"runner": runner_id,  "status": "running", "type": type_of_staging }}
+            jobs_pending = {"class": "Job",
+                            "attributes":
+                                {"runner": runner_id,
+                                 "status": "pending",
+                                 "type": type_of_staging }}
+            jobs_running = {"class": "Job",
+                            "attributes":
+                                {"runner": runner_id,
+                                 "status": "running",
+                                 "type": type_of_staging }}
 
             # send requests to DB to select Jons
             jobs_pending = self._db_connection.send_request("list", json.dumps(jobs_pending))
