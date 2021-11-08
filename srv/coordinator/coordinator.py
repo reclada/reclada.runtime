@@ -158,7 +158,7 @@ class Coordinator():
                 if runners[0][0]:
                     runners_found = [Runner(run["GUID"], 0,
                                             run["attributes"]["status"],
-                                            run["attributes"].get("platformRunnerID",0)) for run in runners[0][0]]
+                                            run["attributes"].get("platformRunnerID",0) for run in runners[0][0]]
                     self._stages[type_of_staging].runners.clear()
                     self._stages[type_of_staging].runners.extend(runners_found)
                     self._log.info(f"Found {len(runners_found)} runners")
