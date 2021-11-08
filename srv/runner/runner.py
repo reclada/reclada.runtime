@@ -30,13 +30,14 @@ class Runner:
     """
     Gets jobs from DB and runs them
     """
-    def __init__(self, id_, status, command, type_, task, environment, runner_db, job_db, s3, runner_logger):
+    def __init__(self, id_, status, command, type_, task, environment, platform_runner_id, runner_db, job_db, s3, runner_logger):
         self.id = id_
         self._status = status
         self.command = command
         self.type = type_
         self.task = task
         self.environment = environment
+        self.platform_runner_id = platform_runner_id
         self._runner_db = runner_db
         self._job_db = job_db
         self._s3 = s3
@@ -227,6 +228,7 @@ class RunnerDB:
                 type_=runner['attributes']['type'],
                 task=runner['attributes']['task'],
                 environment=runner['attributes']['environment'],
+                platform_runner_id=runner['attributes']['platformRunnerID'],
                 runner_db=runner_db,
                 job_db=job_db,
                 s3=s3,
@@ -247,6 +249,7 @@ class RunnerDB:
                 'type': runner.type,
                 'task': runner.task,
                 'environment': runner.environment,
+                'platformRunnerID': runner.platform_runner_id,
                 'last_update': datetime.now().strftime("%Y/%m/%d %H:%M:%S")
             },
         }
@@ -313,3 +316,4 @@ def main(version, runner_id, db_client, verbose):
 
 if __name__ == '__main__':
     main()
+
