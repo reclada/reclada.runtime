@@ -367,6 +367,15 @@ deploy-autotest-env:
   script:
     - echo "Run update database in autotest env"
 
+    - echo "git clone at this place"
+    - cd $CI_PROJECT_DIR/
+
+    - git clone -b $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.reclada.com/developers/reclada-runtime.git
+    - kubectl cp ./reclada-runtime/ reclada-autotest/$(kubectl get pods -n reclada-autotest | grep sshfs | awk '{print $1}'):/repos --no-preserve=true
+
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.reclada.com/developers/badgerdoc.git
+    - kubectl cp ./badgerdoc/ reclada-autotest/$(kubectl get pods -n reclada-autotest | grep sshfs | awk '{print $1}'):/repos --no-preserve=true 
+
     - cd $CI_PROJECT_DIR/devops/helm-charts/$COORDINATOR_RELEASE_NAME && helm upgrade --install --debug --wait --timeout 600s --create-namespace -n reclada-autotest -f values.yaml -f vars/autotest.yaml --set image.tag=$IMAGE_TAG coordinator .
     
     - echo "*******"
@@ -375,14 +384,7 @@ deploy-autotest-env:
 
     - echo "*******"
 
-    - echo "git clone at this place"
-    - cd $CI_PROJECT_DIR/
-
-    - git clone -b $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.reclada.com/developers/reclada-runtime.git
-    - kubectl cp ./reclada-runtime/ reclada-autotest/$(kubectl get pods -n reclada-autotest | grep sshfs | awk '{print $1}'):/repos --no-preserve=true
-
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.reclada.com/developers/badgerdoc.git
-    - kubectl cp ./badgerdoc/ reclada-autotest/$(kubectl get pods -n reclada-autotest | grep sshfs | awk '{print $1}'):/repos --no-preserve=true    
+      
   needs:
     - job: build_coordinator
     - job: prepare_coordinator
