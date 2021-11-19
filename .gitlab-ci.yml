@@ -450,30 +450,30 @@ delete-db-dynamic-env:
 #       when: never
 
 
-test-autotest-env:
-  stage: autotest
-  # image: ???
-  script:
-    - echo "Run some tests for autotest env"
+# test-autotest-env:
+#   stage: autotest
+#   # image: ???
+#   script:
+#     - echo "Run some tests for autotest env"
 
-  needs:
-    - job: deploy-autotest-env
-    - job: terraform-autotest-env
-  tags:
-      - k8s-devops
-  rules:
-    - if: $CI_COMMIT_MESSAGE =~ /^delenv/
-      when: never
-    - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
-      when: always
-    - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
-      when: never
-    - if: $CI_COMMIT_REF_NAME =~ /^dynamic/
-      when: never
-    - if: $CI_COMMIT_REF_NAME == "main"
-      when: never
-    - if: $CI_COMMIT_REF_NAME == "test"
-      when: never
+#   needs:
+#     - job: deploy-autotest-env
+#     - job: terraform-autotest-env
+#   tags:
+#       - k8s-devops
+#   rules:
+#     - if: $CI_COMMIT_MESSAGE =~ /^delenv/
+#       when: never
+#     - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
+#       when: always
+#     - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME =~ /^dynamic/
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME == "main"
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME == "test"
+#       when: never
     
 
 deploy-prod-env:
