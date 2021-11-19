@@ -71,7 +71,6 @@ error_check "ERROR happened during loading data to DB\n"
 printf "STEP 7 - End\n"
 
 printf "STEP 8 - Begin - SciNLP processing\n"
-printf "This step is not implemented yet.\n"
 python3 -m lite "${_OUTPUT_DIR}/output.csv" "${_OUTPUT_DIR}/nlp_output.csv"
 error_check "ERROR happened during SciNLP processing\n" "copy"
 printf "STEP 8 - End\n"
