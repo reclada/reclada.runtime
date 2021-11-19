@@ -30,13 +30,14 @@ class Runner:
     """
     Gets jobs from DB and runs them
     """
-    def __init__(self, id_, status, command, type_, task, environment, runner_db, job_db, s3, runner_logger):
+    def __init__(self, id_, status, command, type_, task, environment, platform_runner_id, runner_db, job_db, s3, runner_logger):
         self.id = id_
         self._status = status
         self.command = command
         self.type = type_
         self.task = task
         self.environment = environment
+        self.platform_runner_id = platform_runner_id
         self._runner_db = runner_db
         self._job_db = job_db
         self._s3 = s3
@@ -110,12 +111,26 @@ class Runner:
         # Here we need to check if CUSTOM_TASK environment is defined
         # if yes then we need to add extra parameter for run_pipeline.sh
         custom_task = os.getenv('CUSTOM_TASK', None)
+        preproces_command = os.getenv('PREPROCESS_COMMAND', None)
+        postprocess_command = os.getenv('POSTPROCESS_COMMAND', None)
         # prepare folder's names for S3 bucket
         s3_output_dir = datetime.now().strftime("%Y/%m/%d/%H:%M:%S:%f/")
         s3_output_dir += job.id
         params = [s3_uri, file_id, job.id, s3_output_dir]
         if custom_task:
             params.append(custom_task)
+        else:
+            params.append("0")
+
+        if preproces_command:
+            params.append(preproces_command)
+        else:
+            params.append("0")
+
+        if postprocess_command:
+            params.append(postprocess_command)
+        else:
+            params.append("0")
 
         job_result = subprocess.run(command + params, cwd=os.getenv('RECLADA_REPO_PATH'))
 
@@ -227,6 +242,7 @@ class RunnerDB:
                 type_=runner['attributes']['type'],
                 task=runner['attributes']['task'],
                 environment=runner['attributes']['environment'],
+                platform_runner_id=runner['attributes']['platformRunnerID'],
                 runner_db=runner_db,
                 job_db=job_db,
                 s3=s3,
@@ -247,6 +263,7 @@ class RunnerDB:
                 'type': runner.type,
                 'task': runner.task,
                 'environment': runner.environment,
+                'platformRunnerID': runner.platform_runner_id,
                 'last_update': datetime.now().strftime("%Y/%m/%d %H:%M:%S")
             },
         }
@@ -313,3 +330,4 @@ def main(version, runner_id, db_client, verbose):
 
 if __name__ == '__main__':
     main()
+
