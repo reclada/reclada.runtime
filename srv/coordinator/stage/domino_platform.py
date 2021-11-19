@@ -41,8 +41,6 @@ class Domino:
     def __init__(self, api_key=None, base_url='https://try.dominodatalab.com/v1/', session=None):
         self.api_key = api_key or os.getenv('DOMINO_USER_API_KEY')  # defines automatically
         self.base_url = os.getenv('DOMINO_URL') or base_url  # defines manually
-        print (f'DOMINO_USER_API_KEY : {self.api_key}')
-        print ( f'DOMINO_URL : {self.base_url}')
         self.session = session or requests.Session()
 
     def _request(self, path, method, params=None, json=None, stream=False, data=None):

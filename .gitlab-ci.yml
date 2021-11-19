@@ -361,119 +361,119 @@ delete-db-dynamic-env:
     - k8s-devops
 
 
-deploy-autotest-env:
-  stage: deploy
-  image: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/helm-kubectl:v1.0.0-0
-  script:
-    - echo "Run update database in autotest env"
+# deploy-autotest-env:
+#   stage: deploy
+#   image: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/helm-kubectl:v1.0.0-0
+#   script:
+#     - echo "Run update database in autotest env"
 
-    - cd $CI_PROJECT_DIR/devops/helm-charts/$COORDINATOR_RELEASE_NAME && helm upgrade --install --debug --wait --timeout 600s --create-namespace -n reclada-autotest -f values.yaml -f vars/autotest.yaml --set image.tag=$IMAGE_TAG coordinator .
+#     - cd $CI_PROJECT_DIR/devops/helm-charts/$COORDINATOR_RELEASE_NAME && helm upgrade --install --debug --wait --timeout 600s --create-namespace -n reclada-autotest -f values.yaml -f vars/autotest.yaml --set image.tag=$IMAGE_TAG coordinator .
     
-    - echo "*******"
+#     - echo "*******"
     
-    - helm upgrade --install --debug --wait --timeout 600s --create-namespace -n reclada-autotest -f $CI_PROJECT_DIR/devops/helm-charts/$SSHFS_RELEASE_NAME/values.yaml -f $CI_PROJECT_DIR/devops/helm-charts/$SSHFS_RELEASE_NAME/vars/autotest.yaml --set image.tag=0.1 $SSHFS_RELEASE_NAME $CI_PROJECT_DIR/devops/helm-charts/$SSHFS_RELEASE_NAME/
+#     - helm upgrade --install --debug --wait --timeout 600s --create-namespace -n reclada-autotest -f $CI_PROJECT_DIR/devops/helm-charts/$SSHFS_RELEASE_NAME/values.yaml -f $CI_PROJECT_DIR/devops/helm-charts/$SSHFS_RELEASE_NAME/vars/autotest.yaml --set image.tag=0.1 $SSHFS_RELEASE_NAME $CI_PROJECT_DIR/devops/helm-charts/$SSHFS_RELEASE_NAME/
 
-    - echo "*******"
+#     - echo "*******"
 
-    - echo "git clone at this place"
-    - cd $CI_PROJECT_DIR/
+#     - echo "git clone at this place"
+#     - cd $CI_PROJECT_DIR/
 
-    - git clone -b $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.reclada.com/developers/reclada-runtime.git
-    - kubectl cp ./reclada-runtime/ reclada-autotest/$(kubectl get pods -n reclada-autotest | grep sshfs | awk '{print $1}'):/repos --no-preserve=true
+#     - git clone -b $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.reclada.com/developers/reclada-runtime.git
+#     - kubectl cp ./reclada-runtime/ reclada-autotest/$(kubectl get pods -n reclada-autotest | grep sshfs | awk '{print $1}'):/repos --no-preserve=true
 
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.reclada.com/developers/badgerdoc.git
-    - kubectl cp ./badgerdoc/ reclada-autotest/$(kubectl get pods -n reclada-autotest | grep sshfs | awk '{print $1}'):/repos --no-preserve=true    
-  needs:
-    - job: build_coordinator
-    - job: prepare_coordinator
-      artifacts: true
-  tags:
-      - k8s-devops
-  rules:
-    - if: $CI_COMMIT_MESSAGE =~ /^delenv/
-      when: never
-    - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
-      when: always
-    - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
-      when: never
-    - if: $CI_COMMIT_REF_NAME =~ /^dynamic/
-      when: never
-    - if: $CI_COMMIT_REF_NAME == "main"
-      when: never
-    - if: $CI_COMMIT_REF_NAME == "test"
-      when: never
+#     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.reclada.com/developers/badgerdoc.git
+#     - kubectl cp ./badgerdoc/ reclada-autotest/$(kubectl get pods -n reclada-autotest | grep sshfs | awk '{print $1}'):/repos --no-preserve=true    
+#   needs:
+#     - job: build_coordinator
+#     - job: prepare_coordinator
+#       artifacts: true
+#   tags:
+#       - k8s-devops
+#   rules:
+#     - if: $CI_COMMIT_MESSAGE =~ /^delenv/
+#       when: never
+#     - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
+#       when: always
+#     - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME =~ /^dynamic/
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME == "main"
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME == "test"
+#       when: never
 
-terraform-autotest-env:
-  stage: deploy
-  image: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/aws-build:v1.0.0-0
-  script:
-    - echo "Run update lambda/S3 in autotest env"
-    - cd $CI_PROJECT_DIR/devops/terraform/
-    - sed -i "s|PGPASSWORD|$PG_PASSWORD|g" $CI_PROJECT_DIR/devops/terraform/variables.tf
-    - sed -i "s|ENVPREFIX|autotest|g" $CI_PROJECT_DIR/devops/terraform/variables.tf
-    - sed -i "s|RDSINSTANCE|test-reclada-k8s.c9lpgtggzz0d.eu-west-1.rds.amazonaws.com|g" $CI_PROJECT_DIR/devops/terraform/variables.tf
-    - cat $CI_PROJECT_DIR/devops/terraform/variables.tf
-    - ./terraform init
-    - ./terraform workspace list
-    - ./terraform workspace select autotest || ./terraform workspace new autotest
-    - ./terraform workspace list
-    - ./terraform apply -target=module.lambda_function -auto-approve
-    - ./terraform apply -target=aws_iam_role.iam_for_lambda -auto-approve
-    - ./terraform apply -target=aws_lambda_function.s3_create_datasource_in_db -auto-approve
-    - ./terraform apply -target=aws_s3_bucket.bucket -auto-approve
-    - ./terraform apply -target=aws_s3_bucket_policy.AllowPublicRead -auto-approve
-    - ./terraform apply -target=aws_s3_bucket_object.inbox_folder -auto-approve
-    - ./terraform apply -target=aws_s3_bucket_object.output_folder -auto-approve
-    - ./terraform apply -target=aws_lambda_permission.allow_bucket -auto-approve
-    - ./terraform apply -target=aws_s3_bucket_notification.bucket_notification -auto-approve
+# terraform-autotest-env:
+#   stage: deploy
+#   image: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/aws-build:v1.0.0-0
+#   script:
+#     - echo "Run update lambda/S3 in autotest env"
+#     - cd $CI_PROJECT_DIR/devops/terraform/
+#     - sed -i "s|PGPASSWORD|$PG_PASSWORD|g" $CI_PROJECT_DIR/devops/terraform/variables.tf
+#     - sed -i "s|ENVPREFIX|autotest|g" $CI_PROJECT_DIR/devops/terraform/variables.tf
+#     - sed -i "s|RDSINSTANCE|test-reclada-k8s.c9lpgtggzz0d.eu-west-1.rds.amazonaws.com|g" $CI_PROJECT_DIR/devops/terraform/variables.tf
+#     - cat $CI_PROJECT_DIR/devops/terraform/variables.tf
+#     - ./terraform init
+#     - ./terraform workspace list
+#     - ./terraform workspace select autotest || ./terraform workspace new autotest
+#     - ./terraform workspace list
+#     - ./terraform apply -target=module.lambda_function -auto-approve
+#     - ./terraform apply -target=aws_iam_role.iam_for_lambda -auto-approve
+#     - ./terraform apply -target=aws_lambda_function.s3_create_datasource_in_db -auto-approve
+#     - ./terraform apply -target=aws_s3_bucket.bucket -auto-approve
+#     - ./terraform apply -target=aws_s3_bucket_policy.AllowPublicRead -auto-approve
+#     - ./terraform apply -target=aws_s3_bucket_object.inbox_folder -auto-approve
+#     - ./terraform apply -target=aws_s3_bucket_object.output_folder -auto-approve
+#     - ./terraform apply -target=aws_lambda_permission.allow_bucket -auto-approve
+#     - ./terraform apply -target=aws_s3_bucket_notification.bucket_notification -auto-approve
 
-  needs:
-    - job: build_coordinator
-    - job: prepare_coordinator
-      artifacts: true
-    - job: build_lambda_zip
-      artifacts: true
-  tags:
-      - k8s-devops
-  rules:
-    - if: $CI_COMMIT_MESSAGE =~ /^delenv/
-      when: never
-    - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
-      when: always
-    - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
-      when: never
-    - if: $CI_COMMIT_REF_NAME =~ /^dynamic/
-      when: never
-    - if: $CI_COMMIT_REF_NAME == "main"
-      when: never
-    - if: $CI_COMMIT_REF_NAME == "test"
-      when: never
+#   needs:
+#     - job: build_coordinator
+#     - job: prepare_coordinator
+#       artifacts: true
+#     - job: build_lambda_zip
+#       artifacts: true
+#   tags:
+#       - k8s-devops
+#   rules:
+#     - if: $CI_COMMIT_MESSAGE =~ /^delenv/
+#       when: never
+#     - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
+#       when: always
+#     - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME =~ /^dynamic/
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME == "main"
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME == "test"
+#       when: never
 
 
-test-autotest-env:
-  stage: autotest
-  # image: ???
-  script:
-    - echo "Run some tests for autotest env"
+# test-autotest-env:
+#   stage: autotest
+#   # image: ???
+#   script:
+#     - echo "Run some tests for autotest env"
 
-  needs:
-    - job: deploy-autotest-env
-    - job: terraform-autotest-env
-  tags:
-      - k8s-devops
-  rules:
-    - if: $CI_COMMIT_MESSAGE =~ /^delenv/
-      when: never
-    - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
-      when: always
-    - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
-      when: never
-    - if: $CI_COMMIT_REF_NAME =~ /^dynamic/
-      when: never
-    - if: $CI_COMMIT_REF_NAME == "main"
-      when: never
-    - if: $CI_COMMIT_REF_NAME == "test"
-      when: never
+#   needs:
+#     - job: deploy-autotest-env
+#     - job: terraform-autotest-env
+#   tags:
+#       - k8s-devops
+#   rules:
+#     - if: $CI_COMMIT_MESSAGE =~ /^delenv/
+#       when: never
+#     - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
+#       when: always
+#     - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME =~ /^dynamic/
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME == "main"
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME == "test"
+#       when: never
     
 
 deploy-prod-env:
