@@ -4,7 +4,15 @@ function error_check(){
   if [ $? -ne 0 ]
   then
     printf "$1"
-    exit 1
+    if [[ -n $2 ]]
+    then
+      # if an error occurred and there was the second parameter of this function
+      # then we need to copy the results of the pipeline processing to S3 bucket and stop the pipeline
+      aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive --sse
+      exit 1
+    else
+      exit 1
+    fi
   fi
 }
 
@@ -36,7 +44,7 @@ if [[ -n $_PREPROCESS_COMMAND && $_PREPROCESS_COMMAND != "0" ]]
 then
   printf "STEP 3 - Begin - Running a preprocess custom command\n"
   source "$_PREPROCESS_COMMAND"
-  error_check "ERROR happened during preprocessing custom command\n"
+  error_check "ERROR happened during preprocessing custom command\n" "copy"
   printf "STEP 3 - End\n"
 else
   printf "Preprocessing command is not set. Step 3 is skipped\n"
@@ -64,8 +72,8 @@ printf "STEP 7 - End\n"
 
 printf "STEP 8 - Begin - SciNLP processing\n"
 printf "This step is not implemented yet.\n"
-#python3 -m lite "${_OUTPUT_DIR}/output.csv" "${_OUTPUT_DIR}/nlp_output.csv"
-error_check "ERROR happened during SciNLP processing\n"
+python3 -m lite "${_OUTPUT_DIR}/output.csv" "${_OUTPUT_DIR}/nlp_output.csv"
+error_check "ERROR happened during SciNLP processing\n" "copy"
 printf "STEP 8 - End\n"
 
 # On some platform such as DOMINO we need to add an extra step in the pipeline.
@@ -75,21 +83,21 @@ if [ -n "$_CUSTOM_TASK" ]
 then
   printf "STEP 9 - Begin - Custom task\n"
   source "$_CUSTOM_TASK"
-  error_check "ERROR happened during processing custom task\n"
+  error_check "ERROR happened during processing custom task\n" "copy"
   printf "STEP 9 - End\n"
 fi
 
-printf "STEP 10 - Begin - Copying result files to the S3 bucket\n"
-aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive --sse
-error_check "ERROR happened during copying results to the S3 bucket\n"
-printf "STEP 10 - End\n"
-
 if [[ -n $_POSTPROCESS_COMMAND && $_POSTPROCESS_COMMAND != "0" ]]
 then
-  printf "STEP 11 - Begin - Running postprocess custom command\n"
+  printf "STEP 10 - Begin - Running postprocess custom command\n"
   source "$_POSTPROCESS_COMMAND"
-  error_check "ERROR happened during postprocessing custom command\n"
-  printf "STEP 11 - End\n"
+  error_check "ERROR happened during postprocessing custom command\n" "copy"
+  printf "STEP 10 - End\n"
 else
   printf "Postprocessing command is not set. Step 11 is skipped\n"
 fi
+
+printf "STEP 11 - Begin - Copying result files to the S3 bucket\n"
+aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive --sse
+error_check "ERROR happened during copying results to the S3 bucket\n"
+printf "STEP 11 - End\n"
