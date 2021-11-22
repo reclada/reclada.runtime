@@ -7,6 +7,7 @@ stages:
   - clean
   - clean_db
   - autotest
+  - push-to-github
 
 prepare_coordinator:
   stage: prepare
@@ -559,5 +560,35 @@ terraform-prod-env:
       when: never
     - if: $CI_COMMIT_REF_NAME == "main"
       when: always
+    - if: $CI_COMMIT_REF_NAME == "test"
+      when: never
+
+push-to-github:
+  stage: push-to-github
+  image: bitnami/git
+  script:
+    - echo "Run push to github"
+    - git remote set-url origin https://gitlab:${MY_GITHUB_TOKEN}@github.com/reclada/reclada.runtime.git
+    - rm -rf .gitlab-ci.yml
+    - rm -rf devops/
+    - git config --global user.email "Gitlab@reclada.com"
+    - git config --global user.name "Gitlab runner"
+    - git add .
+    - git commit -am "${CI_COMMIT_MESSAGE}"
+    - git remote --verbose
+    - git push origin HEAD:$CI_COMMIT_REF_NAME --force
+  tags:
+      - k8s-devops
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "main"
+      when: always
+    - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
+      when: never
+    - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
+      when: never
+    - if: $CI_COMMIT_REF_NAME !~ /^dynamic/
+      when: never
+    - if: $CI_COMMIT_REF_NAME =~ /^dynamic/
+      when: never
     - if: $CI_COMMIT_REF_NAME == "test"
       when: never
