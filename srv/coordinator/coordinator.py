@@ -366,7 +366,7 @@ class JobDB():
         """
         try:
             # creating json structure for a query
-            jobs_new = {"class": "Job", "type": type_staging, "attributes": {"status": "new"}}
+            jobs_new = {"class": "Job", "attributes": {"status": "new", "type": type_staging}}
             # sending request to DB to select all new jobs
             jobs_new = self._db_connection.send_request("list", json.dumps(jobs_new))
         except Exception as ex:
