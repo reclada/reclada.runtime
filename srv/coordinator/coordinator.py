@@ -227,7 +227,6 @@ class Coordinator():
         self._log.info(f'Resurrecting runners.')
         # read all runners from DB
         runners = self._db_runner.get_all(self._platform)
-        print(f'{runners}')
         # select Runner that is UP
         if runners[0][0]:
             runners_up = [ runner for runner in runners[0][0] if runner["attributes"]["status"] == "up" or
@@ -367,7 +366,7 @@ class JobDB():
         """
         try:
             # creating json structure for a query
-            jobs_new = {"class": "Job", "type": type_staging, "attributes": {"status": "new"}}
+            jobs_new = {"class": "Job", "attributes": {"status": "new", "type": type_staging}}
             # sending request to DB to select all new jobs
             jobs_new = self._db_connection.send_request("list", json.dumps(jobs_new))
         except Exception as ex:
