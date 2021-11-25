@@ -65,9 +65,11 @@ class Domino:
     def get_job_status(self, user, project, job_id):
         # get the status or exit code of the specified job
         response = self._request(f'projects/{user}/{project}/runs/{job_id}',"GET").json()
+        print(f'{response}')
         # check response. If isCompleted is true then we need to return 1
         # otherwise the method should return 0
         if response["isCompleted"] == True:
+            print(f'IsCompleted is true')
             return 1
         return 0
 
