@@ -117,20 +117,11 @@ class Runner:
         s3_output_dir = datetime.now().strftime("%Y/%m/%d/%H:%M:%S:%f/")
         s3_output_dir += job.id
         params = [s3_uri, file_id, job.id, s3_output_dir]
-        if custom_task:
-            params.append(custom_task)
-        else:
-            params.append("0")
 
-        if preproces_command:
-            params.append(preproces_command)
-        else:
-            params.append("0")
-
-        if postprocess_command:
-            params.append(postprocess_command)
-        else:
-            params.append("0")
+        # adding runner params for custom commands
+        params.append(custom_task) if custom_task else params.append("0")
+        params.append(preproces_command) if preproces_command else params.append("0")
+        params.append(postprocess_command) if postprocess_command else params.append("0")
 
         job_result = subprocess.run(command + params, cwd=os.getenv('RECLADA_REPO_PATH'))
 
