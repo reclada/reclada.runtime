@@ -6,9 +6,6 @@ import json
 import click
 import time
 import logging
-import subprocess
-import os
-import sys
 
 from srv.coordinator._version import __version__
 from srv.coordinator.stage.stage_factory import stage
