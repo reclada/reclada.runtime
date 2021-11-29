@@ -1,7 +1,8 @@
 from setuptools import setup
+from _version import __version__
 
 setup(name='Reclada Runner',
-      version="0.1.3",
+      version=__version__,
       description='Runner for Reclada project',
       author='',
       author_email='',
