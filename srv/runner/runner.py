@@ -1,11 +1,12 @@
 import json
 import logging
 import os
-import subprocess
 import sys
 import time
 from enum import Enum
 from datetime import datetime
+from subprocess import Popen
+import shlex
 
 import click
 
@@ -104,7 +105,7 @@ class Runner:
         # TODO: resolve all input parameters
         s3_uri = job.input_parameters[0]['uri']
         file_id = job.input_parameters[1]['dataSourceId']
-        command = job.command.split()
+        command = shlex.split(job.command)
         self._logger.info(f'Runner {self.id} is launching job {job.id} with command {job.command} '
                           f'and parameters {job.input_parameters}')
 
@@ -122,8 +123,9 @@ class Runner:
         params.append(custom_task) if custom_task else params.append("0")
         params.append(preproces_command) if preproces_command else params.append("0")
         params.append(postprocess_command) if postprocess_command else params.append("0")
+        command = command + params
 
-        job_result = subprocess.run(command + params, cwd=os.getenv('RECLADA_REPO_PATH'))
+        job_result = Popen(command, cwd=os.getenv('RECLADA_REPO_PATH'))
 
         # updates job status in DB depending on the job return code
         if job_result.returncode == 0:

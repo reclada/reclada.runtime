@@ -1,9 +1,7 @@
 from setuptools import setup
 
-exec(open("_version.py").read())
-
 setup(name='Reclada Runner',
-      version=__version__,
+      version="0.1.3",
       description='Runner for Reclada project',
       author='',
       author_email='',

@@ -1,9 +1,7 @@
 from setuptools import setup
 
-exec(open("_version.py").read())
-
 setup(name='Reclada Coordinator',
-      version=__version__,
+      version="0.1.6",
       description='Coordinatort for Reclada project',
       author='',
       author_email='',
