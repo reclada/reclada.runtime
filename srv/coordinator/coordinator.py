@@ -7,7 +7,7 @@ import click
 import time
 import logging
 
-from srv.coordinator._version import __version__
+from srv.coordinator._version import  __version__
 from srv.coordinator.stage.stage_factory import stage
 from srv.mb_client.mbclient_factory import mbclient
 from srv.db_client.dbclient_factory import dbclient
