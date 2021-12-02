@@ -71,7 +71,7 @@ error_check "ERROR happened during loading data to DB\n"
 printf "STEP 7 - End\n"
 
 printf "STEP 8 - Begin - SciNLP processing\n"
-cd "${SCINLP_REPO_PATH}/lite" || printf "Folder %s doesn't exist.\n" "${SCINLP_REPO_PATH}/lite"
+cd "${SCINLP_REPO_PATH}" || printf "Folder %s doesn't exist.\n" "${SCINLP_REPO_PATH}"
 python3 lite "${_OUTPUT_DIR}/output.csv" "${_OUTPUT_DIR}/nlp_output.csv"
 cd - > /dev/null || printf "Can't return to the previous folder.\n"
 error_check "ERROR happened during SciNLP processing\n" "copy"
