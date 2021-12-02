@@ -28,7 +28,7 @@ _INPUT_DIR="/mnt/input/${_JOB_ID}"
 export _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
 
 export PYTHONPATH="${PYTHONPATH}:${BADGERDOC_REPO_PATH}"
-export PYTHONPATH="${PYTHONPATH}:${SCINLP_REPO_PATH}"
+export PYTHONPATH="${PYTHONPATH}:${SCINLP_REPO_PATH}/lite:${SCINLP_REPO_PATH}"
 
 printf "STEP 1 - Begin - Parsing DB_URI environment variable\n"
 DB_URI_QUOTED=`python3 -c "import urllib.parse; parsed = urllib.parse.urlparse('$DB_URI'); print('$DB_URI'.replace(parsed.password, urllib.parse.quote(parsed.password)))"`
@@ -71,9 +71,7 @@ error_check "ERROR happened during loading data to DB\n"
 printf "STEP 7 - End\n"
 
 printf "STEP 8 - Begin - SciNLP processing\n"
-cd "${SCINLP_REPO_PATH}/lite" || printf "Folder %s doesn't exist.\n" "${SCINLP_REPO_PATH}/lite"
 python3 lite.py "${_OUTPUT_DIR}/output.csv" "${_OUTPUT_DIR}/nlp_output.csv"
-cd - > /dev/null || printf "Can't return to the previous folder.\n"
 error_check "ERROR happened during SciNLP processing\n" "copy"
 printf "STEP 8 - End\n"
 
