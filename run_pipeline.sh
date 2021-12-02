@@ -30,6 +30,8 @@ export _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
 export PYTHONPATH="${PYTHONPATH}:${BADGERDOC_REPO_PATH}"
 export PYTHONPATH="${PYTHONPATH}:${SCINLP_REPO_PATH}"
 
+printf "Folder for lite %s .\n" "${SCINLP_REPO_PATH}"
+
 printf "STEP 1 - Begin - Parsing DB_URI environment variable\n"
 DB_URI_QUOTED=`python3 -c "import urllib.parse; parsed = urllib.parse.urlparse('$DB_URI'); print('$DB_URI'.replace(parsed.password, urllib.parse.quote(parsed.password)))"`
 S3_FILE_NAME=`python3 -c "print('$_S3_FILE_URI'.split('/')[-1])"`
@@ -55,6 +57,8 @@ python3 -m table_extractor.run run "${_INPUT_DIR}/${S3_FILE_NAME}" "${_OUTPUT_DI
 error_check "ERROR happened during running badgerdoc\n"
 printf "STEP 4 - End\n"
 
+printf "Folder for lite %s .\n" "${SCINLP_REPO_PATH}"
+
 printf "STEP 5 - Begin - Copying the results of badgerdoc's work to the S3 bucket\n"
 aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive --sse
 error_check "ERROR happened during copying results to the S3 bucket\n"
@@ -64,6 +68,8 @@ printf "STEP 6 - Begin - Starting bd2reclada\n"
 python3 -m bd2reclada "${_OUTPUT_DIR}/${S3_FILE_NAME}/document.json" "${_OUTPUT_DIR}/output.csv" "${_FILE_ID}"
 error_check "ERROR happened during running bd2reclada\n"
 printf "STEP 6 - End\n"
+
+printf "Folder for lite %s .\n" "${SCINLP_REPO_PATH}"
 
 printf "STEP 7 - Begin - Loading data to DB\n"
 cat "${_OUTPUT_DIR}/output.csv" | psql ${DB_URI_QUOTED} -c "\COPY reclada.staging FROM STDIN WITH CSV QUOTE ''''"
