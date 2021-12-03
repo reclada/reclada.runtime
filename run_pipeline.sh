@@ -71,7 +71,7 @@ error_check "ERROR happened during loading data to DB\n"
 printf "STEP 7 - End\n"
 
 printf "STEP 8 - Begin - SciNLP processing\n"
-python3 -m lite "${_OUTPUT_DIR}/output.csv" "${_OUTPUT_DIR}/nlp_output.csv" "${DB_URI_QUOTED}"
+python3 "${SCINLP_REPO_PATH}/lite/lite.py" "${_OUTPUT_DIR}/output.csv" "${_OUTPUT_DIR}/nlp_output.csv" "${DB_URI_QUOTED}"
 error_check "ERROR happened during SciNLP processing\n" "copy"
 printf "STEP 8 - End\n"
 
