@@ -73,7 +73,7 @@ printf "STEP 7 - End\n"
 echo $PYTHONPATH
 
 printf "STEP 8 - Begin - SciNLP processing\n"
-python3 lite.py "${_OUTPUT_DIR}/output.csv" "${_OUTPUT_DIR}/nlp_output.csv"
+python3 -m lite "${_OUTPUT_DIR}/output.csv" "${_OUTPUT_DIR}/nlp_output.csv"
 error_check "ERROR happened during SciNLP processing\n" "copy"
 printf "STEP 8 - End\n"
 
