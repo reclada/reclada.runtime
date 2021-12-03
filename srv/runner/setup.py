@@ -1,6 +1,5 @@
 from setuptools import setup
-
-exec(open("_version.py").read())
+from _version import __version__
 
 setup(name='Reclada Runner',
       version=__version__,
