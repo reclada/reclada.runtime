@@ -2,6 +2,8 @@ stages:
   - prepare
   - build
   - db
+  - webui
+  - scinlp
   - test
   - deploy
   - clean
@@ -142,6 +144,78 @@ prepare_db_coordinator:
   tags:
     - k8s-devops
 
+prepare_webui:
+  stage: webui
+  image: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/curljq:01
+  script:
+    - curl --version
+    - jq --version
+    - echo $RUNTIME_REPO_TOKEN
+    - echo $CI_COMMIT_REF_NAME
+    #Create db with the same name prefix as current branch
+    - curl --request POST --header "PRIVATE-TOKEN:$WEBUI_REPO_TOKEN" "https://gitlab.reclada.com/api/v4/projects/27/repository/branches?branch=$CI_COMMIT_REF_NAME&ref=main" | jq
+    # Check pipeline sussess for current branch in runtime repository 
+    - sleep 60
+    - while [ $response != "success" ] && [ $response != "failed" ]; do sleep 5 ; echo "WATING FOR PIPELINE" ; response=$(curl --header "PRIVATE-TOKEN:$WEBUI_REPO_TOKEN" "https://gitlab.reclada.com/api/v4/projects/27/pipelines?per_page=1&page=1" | jq -r '.[].status') ; echo $response ; done ;
+
+  needs:
+    - job: prepare_coordinator
+    - job: prepare_db_coordinator
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /^delenv/
+      when: never
+    - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ && $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
+      when: never
+    - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ && $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
+      when: never
+    - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
+      when: never
+    - if: $CI_COMMIT_REF_NAME =~ /^dynamic/ && $CI_COMMIT_MESSAGE !~ /^delenv/ && $CI_MERGE_REQUEST_ID !~ /^./ 
+      when: always
+    - if: $CI_COMMIT_REF_NAME == "main"
+      when: never
+    - if: $CI_COMMIT_REF_NAME == "test"
+      when: never
+  tags:
+    - k8s-devops
+
+prepare_scinlp:
+  stage: scinlp
+  image: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/curljq:01
+  script:
+    - curl --version
+    - jq --version
+    - echo $CI_COMMIT_REF_NAME
+    #Create db with the same name prefix as current branch
+    - curl --request POST --header "PRIVATE-TOKEN:$SCINLP_REPO_TOKEN" "https://gitlab.reclada.com/api/v4/projects/37/repository/branches?branch=$CI_COMMIT_REF_NAME&ref=main" | jq
+    # Check pipeline sussess for current branch in runtime repository 
+    - sleep 60
+    - while [ $response != "success" ] && [ $response != "failed" ]; do sleep 5 ; echo "WATING FOR PIPELINE" ; response=$(curl --header "PRIVATE-TOKEN:$SCINLP_REPO_TOKEN" "https://gitlab.reclada.com/api/v4/projects/37/pipelines?per_page=1&page=1" | jq -r '.[].status') ; echo $response ; done ;
+
+  needs:
+    - job: prepare_coordinator
+    - job: prepare_db_coordinator
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /^delenv/
+      when: never
+    - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ && $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
+      when: never
+    - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ && $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
+      when: never
+    - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
+      when: never
+    - if: $CI_COMMIT_REF_NAME =~ /^dynamic/ && $CI_COMMIT_MESSAGE !~ /^delenv/ && $CI_MERGE_REQUEST_ID !~ /^./ 
+      when: always
+    - if: $CI_COMMIT_REF_NAME == "main"
+      when: never
+    - if: $CI_COMMIT_REF_NAME == "test"
+      when: never
+  tags:
+    - k8s-devops
+
+
 test-dynamic-env:
   stage: test
   # image: ???
@@ -264,6 +338,8 @@ terraform-dynamic-env:
     when: never
 
 
+  
+
 
 delete-k8s-dynamic-env:
   stage: clean
@@ -339,7 +415,7 @@ delete-db-dynamic-env:
   script:
     - echo "Uninstall db"
     - echo $CI_COMMIT_MESSAGE
-    - psql -h dev-reclada-k8s.c9lpgtggzz0d.eu-west-1.rds.amazonaws.com -p 5432 -U reclada -d postgres -c "DROP DATABASE $ENV_reclada_k8s;"
+    - psql -h dev-reclada-k8s.c9lpgtggzz0d.eu-west-1.rds.amazonaws.com -p 5432 -U reclada -d postgres -c "DROP DATABASE ${ENV}_reclada_k8s;"
   needs:
     - job: delete-terraform-dynamic-env
     - job: delete-k8s-dynamic-env
