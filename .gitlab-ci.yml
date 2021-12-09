@@ -582,6 +582,8 @@ deploy-prod-env:
   tags:
       - k8s-devops
   rules:
+    - if: $CI_COMMIT_REF_NAME == "main"
+      when: always
     - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
       when: never
     - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
@@ -590,8 +592,6 @@ deploy-prod-env:
       when: never
     - if: $CI_COMMIT_REF_NAME =~ /^dynamic/
       when: never
-    - if: $CI_COMMIT_REF_NAME == "main"
-      when: always
     - if: $CI_COMMIT_REF_NAME == "test"
       when: never
 
@@ -626,6 +626,8 @@ terraform-prod-env:
   tags:
       - k8s-devops
   rules:
+    - if: $CI_COMMIT_REF_NAME == "main"
+      when: always
     - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
       when: never
     - if: $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
@@ -634,8 +636,6 @@ terraform-prod-env:
       when: never
     - if: $CI_COMMIT_REF_NAME =~ /^dynamic/
       when: never
-    - if: $CI_COMMIT_REF_NAME == "main"
-      when: always
     - if: $CI_COMMIT_REF_NAME == "test"
       when: never
 
@@ -653,6 +653,9 @@ push-to-github:
     - git commit -am "${CI_COMMIT_MESSAGE}"
     - git remote --verbose
     - git push origin HEAD:$CI_COMMIT_REF_NAME --force
+  needs:
+    - job: terraform-prod-env
+    - job: deploy-prod-env
   tags:
       - k8s-devops
   rules:
