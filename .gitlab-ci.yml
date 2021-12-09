@@ -27,19 +27,15 @@ prepare_coordinator:
     reports:
       dotenv: prepare.env
   rules:
+    - if: $CI_COMMIT_REF_NAME == "main"
+      when: always
     - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ && $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main" && $CI_COMMIT_MESSAGE !~ /^delenv/
       when: always
     - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ && $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test" && $CI_COMMIT_MESSAGE !~ /^delenv/
       when: always
-    # - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ && $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
-    #   when: always
-    # - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ && $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
-    #   when: always
     - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
       when: never
     - if: $CI_COMMIT_REF_NAME =~ /^dynamic/ 
-      when: always
-    - if: $CI_COMMIT_REF_NAME == "main"
       when: always
     - if: $CI_COMMIT_REF_NAME == "test"
       when: never
@@ -55,6 +51,8 @@ build_coordinator:
     - job: prepare_coordinator
       artifacts: true
   rules:
+    - if: $CI_COMMIT_REF_NAME == "main"
+      when: always
     - if: $CI_COMMIT_MESSAGE =~ /^delenv/
       when: never
     - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ && $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main" && $CI_COMMIT_MESSAGE !~ /^delenv/
@@ -64,8 +62,6 @@ build_coordinator:
     - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
       when: never
     - if: $CI_COMMIT_REF_NAME =~ /^dynamic/ && $CI_COMMIT_MESSAGE !~ /^delenv/
-      when: always
-    - if: $CI_COMMIT_REF_NAME == "main"
       when: always
     - if: $CI_COMMIT_REF_NAME == "test"
       when: never
