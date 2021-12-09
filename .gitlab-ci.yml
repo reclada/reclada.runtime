@@ -90,6 +90,8 @@ build_lambda_zip:
     - $CI_PROJECT_DIR/devops/terraform/s3_get_presigned_url.zip
     expire_in: 4 week
   rules:
+    - if: $CI_COMMIT_REF_NAME == "main"
+      when: always
     - if: $CI_COMMIT_MESSAGE =~ /^delenv/
       when: never
     - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ && $CI_MERGE_REQUEST_ID =~ /^./ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main" && $CI_COMMIT_MESSAGE !~ /^delenv/
@@ -99,8 +101,6 @@ build_lambda_zip:
     - if: $CI_COMMIT_REF_NAME !~ /^dynamic/ 
       when: never
     - if: $CI_COMMIT_REF_NAME =~ /^dynamic/ && $CI_COMMIT_MESSAGE !~ /^delenv/
-      when: always
-    - if: $CI_COMMIT_REF_NAME == "main"
       when: always
     - if: $CI_COMMIT_REF_NAME == "test"
       when: never
@@ -551,6 +551,7 @@ delete-db-dynamic-env:
 
 deploy-prod-env:
   stage: deploy
+  image: 588200329560.dkr.ecr.eu-west-1.amazonaws.com/helm-kubectl:v1.0.0-0
   script:
     - echo "Run update database in prod env"
 
@@ -618,6 +619,8 @@ terraform-prod-env:
   needs:
     - job: build_coordinator
     - job: prepare_coordinator
+      artifacts: true
+    - job: build_lambda_zip
       artifacts: true
   tags:
       - k8s-devops
