@@ -22,8 +22,8 @@ _FILE_ID="$2"
 _JOB_ID="$3"
 export _S3_OUTPUT_DIR="$4"
 _CUSTOM_TASK="$5"
-_PREPROCESS_COMMAND="$6"
-_POSTPROCESS_COMMAND="$7"
+_PREPROCESS_TASK="$6"
+_POSTPROCESS_TASK="$7"
 _INPUT_DIR="/mnt/input/${_JOB_ID}"
 export _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
 
@@ -40,10 +40,10 @@ aws s3 cp "${_S3_FILE_URI}" "${_INPUT_DIR}/${S3_FILE_NAME}"
 error_check 'ERROR happened during copying files form S3 bucket\n'
 printf "STEP 2 - End \n"
 
-if [[ -n $_PREPROCESS_COMMAND && $_PREPROCESS_COMMAND != "0" ]]
+if [[ -n $_PREPROCESS_TASK && $_PREPROCESS_TASK != "0" ]]
 then
   printf "STEP 3 - Begin - Running a preprocess custom command\n"
-  source "$_PREPROCESS_COMMAND"
+  source "$_PREPROCESS_TASK"
   error_check "ERROR happened during preprocessing custom command\n" "copy"
   printf "STEP 3 - End\n"
 else
@@ -86,10 +86,10 @@ then
   printf "STEP 9 - End\n"
 fi
 
-if [[ -n $_POSTPROCESS_COMMAND && $_POSTPROCESS_COMMAND != "0" ]]
+if [[ -n $_POSTPROCESS_TASK && $_POSTPROCESS_TASK != "0" ]]
 then
   printf "STEP 10 - Begin - Running postprocess custom command\n"
-  source "$_POSTPROCESS_COMMAND"
+  source "$_POSTPROCESS_TASK"
   error_check "ERROR happened during postprocessing custom command\n" "copy"
   printf "STEP 10 - End\n"
 else

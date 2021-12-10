@@ -112,16 +112,16 @@ class Runner:
         # Here we need to check if CUSTOM_TASK environment is defined
         # if yes then we need to add extra parameter for run_pipeline.sh
         custom_task = os.getenv('CUSTOM_TASK', None)
-        preproces_command = os.getenv('PREPROCESS_COMMAND', None)
-        postprocess_command = os.getenv('POSTPROCESS_COMMAND', None)
+        preproces_task = os.getenv('PREPROCESS_TASK', None)
+        postprocess_task = os.getenv('POSTPROCESS_TASK', None)
         # prepare folder's names for S3 bucket
         s3_output_dir = datetime.now().strftime("%Y/%m/%d/%H:%M:%S:%f/")
         s3_output_dir += job.id
         params = [s3_uri, file_id, job.id, s3_output_dir]
         # adding runner params for custom commands
         params.append(custom_task) if custom_task else params.append("0")
-        params.append(preproces_command) if preproces_command else params.append("0")
-        params.append(postprocess_command) if postprocess_command else params.append("0")
+        params.append(preproces_task) if preproces_task else params.append("0")
+        params.append(postprocess_task) if postprocess_task else params.append("0")
         command = command + params
 
         # start a job by the Runner
