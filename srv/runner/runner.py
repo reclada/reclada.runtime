@@ -126,6 +126,7 @@ class Runner:
 
         # start a job by the Runner
         job_result = Popen(command, cwd=os.getenv('RECLADA_REPO_PATH'))
+        job_result.wait()
 
         # updates job status in DB depending on the job return code
         if job_result.returncode == 0:
