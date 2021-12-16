@@ -4,7 +4,7 @@
 aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}/context/output" --recursive --sse
 aws s3 cp "${_INPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}/context/input" --recursive --sse
 
-# if we have a parameter then we need to create a json file to start processing the next step in the pipeline
+# if we have a parameter then we need to create a json file to start processing of the next step in the pipeline
 if [[ -n $1 ]]
 then
   touch "$1.json"

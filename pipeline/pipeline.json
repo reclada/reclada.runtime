@@ -1,0 +1,13 @@
+{
+  "pipeline": [
+    {"stage": "0", "command": "./pipeline/create_pipeline.sh"},
+    {"stage": "1", "command": "./pipeline/copy_file_from_s3.sh"},
+    {"stage": "2", "command": "./pipeline/badgerdoc_run.sh"},
+    {"stage": "3", "command": "./pipeline/bd2reclada_run.sh"},
+    {"stage": "4", "command": "./pipeline/loading_data_to_db.sh"},
+    {"stage": "5", "command": "./pipeline/scinlp_run.sh"},
+    {"stage": "6", "command": "./pipeline/loading_results_to_db.sh"},
+    {"stage": "7", "command": "./pipeline/custom_task.sh"},
+    {"stage": "8", "command": "./pipeline/coping_results.sh"}
+  ]
+}
