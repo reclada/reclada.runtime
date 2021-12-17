@@ -1,5 +1,5 @@
 #!/bin/bash
-source ./error_check.sh
+source ./pipeline/error_check.sh
 
 export _S3_FILE_URI="$1"
 export _FILE_ID="$2"
@@ -13,7 +13,7 @@ export PYTHONPATH="${PYTHONPATH}:${SCINLP_REPO_PATH}/lite:${SCINLP_REPO_PATH}"
 printf "SCRIPT - Beging - Running bd2reclada utility for pipeline %s\n" _JOB_ID
 
 printf "STEP 1 - Begin - Restoring the pipeline context\n"
-source ./get_context.sh
+source ./pipeline/get_context.sh
 error_check 'ERROR happened during restoring the pipeline context\n'
 printf "STEP 1 - End\n"
 
@@ -27,6 +27,6 @@ error_check "ERROR happened during running bd2reclada\n"
 printf "STEP 3 - End\n"
 
 printf "STEP 4 - Begin - Saving the pipeline context\n"
-source ./save_context.sh 4
+source ./pipeline/save_context.sh 4
 error_check 'ERROR happened during saving the pipeline context\n'
 printf "STEP 4 - End\n"

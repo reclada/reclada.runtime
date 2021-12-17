@@ -49,7 +49,11 @@ class K8sPlatform(Stage):
         # this job_id is supposed to be created in K8S environment
         namespace, name = job_id.split(":")
         # find job by namespace and name
-        job = pykube.Job.objects(api).filter(namespace=namespace).get(name=name)
+        try:
+            job = pykube.Job.objects(api).filter(namespace=namespace).get(name=name)
+        except pykube.exceptions.ObjectDoesNotExist :
+            # if job is not found ten it is considered inactive
+            return 1
         # Check the status of the job. If the job is still running then
         # we consider it as a normal processing and return 0. If the job is finished
         # by whatever reason we need to return 1. For us it doesn't matter the reason since

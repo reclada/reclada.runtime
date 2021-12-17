@@ -116,14 +116,25 @@ class Runner:
         postprocess_task = os.getenv('POSTPROCESS_TASK', None)
         # prepare folder's names for S3 bucket
         s3_output_dir = datetime.now().strftime("%Y/%m/%d/%H:%M:%S:%f/")
-        s3_output_dir += job.id
-        params = [s3_uri, file_id, job.id, s3_output_dir]
+
+        # for a pipeline job id is the id of the first job
+        # in the pipeline. The id of the first job in the pipeline
+        # would be specified as an input parameters for all jobs in the pipeline
+        # and we need to replace job ids with the id of the first job
+        input_job_id = [ job_id.get("PipelineLiteJobGUID") for job_id in job.input_parameters
+                         if job_id.get("PipelineLiteJobGUID", None)]
+        job_id = input_job_id[0] if input_job_id else job.id
+
+        # output folder should have job pipeline id for pipline and
+        # job id for all other cases
+        s3_output_dir += job_id
+
+        params = [s3_uri, file_id, job_id, s3_output_dir]
         # adding runner params for custom commands
         params.append(custom_task) if custom_task else params.append("0")
         params.append(preproces_task) if preproces_task else params.append("0")
         params.append(postprocess_task) if postprocess_task else params.append("0")
         command = command + params
-
         # start a job by the Runner
         job_result = Popen(command, cwd=os.getenv('RECLADA_REPO_PATH'))
         job_result.wait()
@@ -161,10 +172,17 @@ class Runner:
 
                 # process all new jobs found in DB
                 for job in self.jobs:
-                    job_result = self.run_job(job)
-                    job_stdout = job_result.stdout
-                    job_stderr = job_result.stderr
-                    job_returncode = job_result.returncode
+                    # if there are no commands in the job then we need to skip it
+                    # and set the status of the job to failed
+                    if job.command:
+                        job_result = self.run_job(job)
+                        job_stdout = job_result.stdout
+                        job_stderr = job_result.stderr
+                        job_returncode = job_result.returncode
+                    else:
+                        self._logger.info(f"Job {job.id} doesn't have any command to run")
+                        job.status = JobStatus.FAILED
+                        self._job_db.save_job(job)
 
                 # updates runner status in DB to "idle" when all jobs finished
                 self.status = RunnerStatus.IDLE
@@ -175,10 +193,10 @@ class Runner:
                 self._logger.info(f'Runner {self.id} is waiting for new jobs')
                 # update runner object in reclada DB with last_update
                 self._runner_db.save_runner(self)
-                time.sleep(30)
+                time.sleep(3)
 
             stop = time.time()
-            if stop - start > 300:
+            if stop - start > 3000:
                 # updates runner status in DB to "down" and
                 # shutdowns runner if there was no jobs for 5 mins
                 self.status = RunnerStatus.DOWN
