@@ -9,12 +9,12 @@ export _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
 
 printf "SCRIPT - Begin - Coping a file %s from S3 bucket for pipeline %s\n" "${_S3_FILE_URI}" "${_JOB_ID}"
 
-printf "STEP 1 - Begin - Parsing DB_URI environment variable\n"
+printf "STEP 1 - Begin - Parsing S3 file name\n"
 S3_FILE_NAME=`python3 -c "print('$_S3_FILE_URI'.split('/')[-1])"`
 printf "STEP 1 - End\n"
 
 printf "STEP 2 - Begin - Copying files from S3 bucket to local drive\n"
-aws s3 cp "${_S3_FILE_URI}" "${_INPUT_DIR}/${S3_FILE_NAME}"
+aws s3 cp "${_S3_FILE_URI}" "${_INPUT_DIR}/${S3_FILE_NAME}" > /dev/null
 error_check 'ERROR happened during copying files form S3 bucket\n'
 printf "STEP 2 - End \n"
 

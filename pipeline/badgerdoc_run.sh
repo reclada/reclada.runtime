@@ -12,7 +12,7 @@ export PYTHONPATH="${PYTHONPATH}:${SCINLP_REPO_PATH}/lite:${SCINLP_REPO_PATH}"
 
 printf "SCRIPT - Begin - Running badgerdoc to process the document %s for pipeline %s\n" "${_S3_FILE_URI}" "${_JOB_ID}"
 
-printf "STEP 1 - Begin - Parsing DB_URI environment variable\n"
+printf "STEP 1 - Begin - Parsing S3 file name\n"
 S3_FILE_NAME=`python3 -c "print('$_S3_FILE_URI'.split('/')[-1])"`
 printf "STEP 1 - End\n"
 

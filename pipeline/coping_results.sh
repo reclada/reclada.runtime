@@ -15,13 +15,13 @@ error_check 'ERROR happened during restoring the pipeline context\n'
 printf "STEP 1 - End\n"
 
 printf "STEP 2 - Begin - Copying result files to the S3 bucket\n"
-aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive --sse
+aws s3 cp "${_OUTPUT_DIR}" "s3://${AWS_S3_BUCKET_NAME}/output/${_S3_OUTPUT_DIR}" --recursive --sse > /dev/null
 error_check "ERROR happened during copying results to the S3 bucket\n"
 printf "STEP 2 - End\n"
 
-printf "STEP 3 - Begin - Saving the pipeline context\n"
-source ./pipeline/save_context.sh
-error_check 'ERROR happened during saving the pipeline context\n'
+printf "STEP 3 - Begin - Cleaning the context of the pipeline\n"
+source ./pipeline/clean_context.sh
+error_check "ERROR happened during clenaning the context of the pipeline\n"
 printf "STEP 3 - End\n"
 
 printf "SCRIPT - End\n"

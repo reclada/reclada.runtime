@@ -21,7 +21,7 @@ S3_FILE_NAME=`python3 -c "print('$_S3_FILE_URI'.split('/')[-1])"`
 printf "STEP 2 - End\n"
 
 printf "STEP 3 - Begin - Custom task processing\n"
-source "${CUSTOM_REPO_PATH}/custom_task.sh"
+#source "${CUSTOM_REPO_PATH}/custom_task.sh"
 error_check 'ERROR happened during processing the custom task\n'
 printf "STEP 3 - End\n"
 

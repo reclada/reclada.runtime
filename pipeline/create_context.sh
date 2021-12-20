@@ -5,4 +5,4 @@
 #  2. Place a json file with the following name 1.json to the created folder. Where 1 indicates
 #     the stage number that is supposed to be initiated on the next step
 touch 1.json
-aws s3 cp 1.json "s3://${AWS_S3_BUCKET_NAME}/inbox/pipelines/${_JOB_ID}"/
+aws s3 cp 1.json "s3://${AWS_S3_BUCKET_NAME}/inbox/pipelines/${_JOB_ID}"/ > /dev/null

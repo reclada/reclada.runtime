@@ -10,14 +10,14 @@ export _OUTPUT_DIR="/mnt/output/${_JOB_ID}"
 export PYTHONPATH="${PYTHONPATH}:${BADGERDOC_REPO_PATH}"
 export PYTHONPATH="${PYTHONPATH}:${SCINLP_REPO_PATH}/lite:${SCINLP_REPO_PATH}"
 
-printf "SCRIPT - Beging - Running bd2reclada utility for pipeline %s\n" _JOB_ID
+printf "SCRIPT - Beging - Running bd2reclada utility for pipeline %s\n" "${_JOB_ID}"
 
 printf "STEP 1 - Begin - Restoring the pipeline context\n"
 source ./pipeline/get_context.sh
 error_check 'ERROR happened during restoring the pipeline context\n'
 printf "STEP 1 - End\n"
 
-printf "STEP 2 - Begin - Parsing DB_URI environment variable\n"
+printf "STEP 2 - Begin - Parsing S3 file name\n"
 S3_FILE_NAME=`python3 -c "print('$_S3_FILE_URI'.split('/')[-1])"`
 printf "STEP 2 - End\n"
 

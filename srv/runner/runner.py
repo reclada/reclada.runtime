@@ -196,7 +196,7 @@ class Runner:
                 time.sleep(3)
 
             stop = time.time()
-            if stop - start > 300:
+            if stop - start > 3000:
                 # updates runner status in DB to "down" and
                 # shutdowns runner if there was no jobs for 5 mins
                 self.status = RunnerStatus.DOWN
