@@ -21,8 +21,6 @@ printf "STEP 2 - Begin - Parsing DB_URI environment variable\n"
 DB_URI_QUOTED=`python3 -c "import urllib.parse; parsed = urllib.parse.urlparse('$DB_URI'); print('$DB_URI'.replace(parsed.password, urllib.parse.quote(parsed.password)))"`
 printf "STEP 2 - End\n"
 
-printf "PYTHONPATH before running lite %s\n" "${PYTHONPATH}"
-
 printf "STEP 3 - Begin - SciNLP processing\n"
 python3 -m lite "${_OUTPUT_DIR}/output.csv" "${_OUTPUT_DIR}/nlp_output.csv" "${DB_URI_QUOTED}"
 error_check "ERROR happened during SciNLP processing\n"
