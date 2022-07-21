@@ -22,11 +22,14 @@ S3_FILE_NAME=`python3 -c "print('$_S3_FILE_URI'.split('/')[-1])"`
 printf "STEP 2 - End\n"
 
 printf "STEP 3 - Begin - Starting bd2reclada\n"
+cd /repos/SciNLP/src/srv/bd2reclada
+sudo python3 setup.py install
 python3 -m bd2reclada "${_OUTPUT_DIR}/${S3_FILE_NAME}/document.json" "${_OUTPUT_DIR}/output.csv" "${_FILE_ID}"
 error_check "ERROR happened during running bd2reclada\n"
 printf "STEP 3 - End\n"
 
 printf "STEP 4 - Begin - Saving the pipeline context\n"
+cd /repos/reclada.runtime
 source ./pipeline/save_context.sh 4
 error_check 'ERROR happened during saving the pipeline context\n'
 printf "STEP 4 - End\n"
