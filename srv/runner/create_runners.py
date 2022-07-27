@@ -32,7 +32,7 @@ def main():
 
         data = {
             'class': 'Runner',
-            'attrs': {
+            'attributes': {
                 'command': '',
                 'status': 'down',
                 'type': args.type,
